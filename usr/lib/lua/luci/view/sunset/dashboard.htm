@@ -106,12 +106,12 @@
   <div class="ss-alert" id="ss-alert"></div>
 
   <div class="ss-tabs" id="ss-tabs">
-    <button class="ss-tab active" type="button" data-tab="welcome">Welcome</button>
-    <button class="ss-tab" type="button" data-tab="beli">Beli</button>
-    <button class="ss-tab" type="button" data-tab="pending">Pending</button>
-    <button class="ss-tab" type="button" data-tab="notifikasi">Notifikasi<span class="ss-tab-badge" id="ss-notif-badge" style="display:none"></span></button>
-    <button class="ss-tab" type="button" data-tab="bookmark">Bookmark</button>
-    <button class="ss-tab" type="button" data-tab="pengaturan">Pengaturan</button>
+    <button class="ss-tab active" type="button" data-stab="welcome">Welcome</button>
+    <button class="ss-tab" type="button" data-stab="beli">Beli</button>
+    <button class="ss-tab" type="button" data-stab="pending">Pending</button>
+    <button class="ss-tab" type="button" data-stab="notifikasi">Notifikasi<span class="ss-tab-badge" id="ss-notif-badge" style="display:none"></span></button>
+    <button class="ss-tab" type="button" data-stab="bookmark">Bookmark</button>
+    <button class="ss-tab" type="button" data-stab="pengaturan">Pengaturan</button>
   </div>
 
   <!-- ================= TAB WELCOME ================= -->
@@ -459,7 +459,7 @@ function showTab(name){
   });
   var tabs = $("ss-tabs").children;
   for (var i = 0; i < tabs.length; i++) {
-    tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
+    tabs[i].classList.toggle("active", tabs[i].getAttribute("data-stab") === name);
   }
   if (name === "pending" && !state.pendingLoaded && cfg.has_secret) loadPending();
   if (name === "notifikasi" && !state.notifLoaded && cfg.has_secret) loadNotifications();
@@ -1300,7 +1300,7 @@ function init(){
   $("ss-c-method").addEventListener("change", updateBuyWarn);
   var tabs = $("ss-tabs").children;
   for (var i = 0; i < tabs.length; i++) {
-    tabs[i].addEventListener("click", function(){ showTab(this.getAttribute("data-tab")); });
+    tabs[i].addEventListener("click", function(){ showTab(this.getAttribute("data-stab")); });
   }
   $("ss-btn-otp").addEventListener("click", requestOtp);
   $("ss-btn-verify").addEventListener("click", verifyOtp);
