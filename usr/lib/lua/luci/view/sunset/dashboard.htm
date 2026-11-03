@@ -86,6 +86,15 @@
 .ss-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#1b2330;color:#fff;border-radius:999px;padding:11px 22px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:99;max-width:90vw;text-align:center}
 .ss-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .ss-spin{display:none;font-size:13px;color:var(--ss-muted)}
+.ss-spin::before{content:"";display:inline-block;width:11px;height:11px;margin-right:7px;vertical-align:-2px;border-radius:50%;border:2px solid var(--ss-border);border-top-color:var(--ss-muted);animation:ss-rot .7s linear infinite}
+@keyframes ss-rot{to{transform:rotate(360deg)}}
+.ss-progress{position:sticky;top:0;z-index:60;height:3px;margin:-20px -20px 12px;overflow:hidden;opacity:0;transition:opacity .25s}
+.ss-progress.on{opacity:1}
+.ss-progress>i{display:block;height:100%;width:38%;background:var(--ss-grad);border-radius:99px;animation:ss-ind 1.1s ease-in-out infinite}
+.ss-loadbar{height:3px;border-radius:99px;background:var(--ss-border);overflow:hidden;margin-top:8px}
+.ss-loadbar>i{display:block;height:100%;width:38%;background:var(--ss-grad);border-radius:99px;animation:ss-ind 1.1s ease-in-out infinite}
+@keyframes ss-ind{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
+.ss-qgrid>.ss-loadbar,.ss-ngrid>.ss-loadbar{grid-column:1/-1}
 .ss-foot{font-size:12px;color:var(--ss-muted);text-align:center;line-height:1.7;margin-top:8px}
 @media (max-width:600px){.ss-opt .op{font-size:15px}}
 .ss-wgrid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:0 14px;align-items:start}
@@ -95,6 +104,7 @@
 </style>
 
 <div class="ss-wrap">
+  <div class="ss-progress" id="ss-progress"><i></i></div>
   <div class="ss-top">
     <div>
       <h1 class="ss-title"><span class="ss-mark">&#9646;</span> SUNSET</h1>
@@ -123,7 +133,7 @@
         <input class="ss-input" id="ss-login-number" type="tel" inputmode="numeric" placeholder="08xxxxxxxxxx" autocomplete="off">
         <div class="ss-btnrow">
           <button class="ss-btn primary" id="ss-btn-otp" type="button">Kirim OTP</button>
-          <span class="ss-spin" id="ss-login-spin">Memproses&hellip;</span>
+          <span class="ss-spin" id="ss-login-spin">Mengirim kode OTP&hellip;</span>
         </div>
         <p class="ss-note" style="margin-top:10px">Kode OTP 6 digit akan dikirim via SMS ke nomor tersebut.</p>
       </div>
@@ -134,7 +144,7 @@
         <div class="ss-btnrow">
           <button class="ss-btn primary" id="ss-btn-verify" type="button">Masuk</button>
           <button class="ss-btn" id="ss-btn-otp-back" type="button">Ganti Nomor</button>
-          <span class="ss-spin" id="ss-verify-spin">Memproses&hellip;</span>
+          <span class="ss-spin" id="ss-verify-spin">Memverifikasi kode&hellip;</span>
         </div>
       </div>
     </div>
@@ -162,12 +172,12 @@
         </div>
         <div class="ss-btnrow">
           <button class="ss-btn primary" id="ss-btn-refresh" type="button">&#8635; Refresh Saldo &amp; Kuota</button>
-          <span class="ss-spin" id="ss-w-spin">Memperbarui&hellip;</span>
+          <span class="ss-spin" id="ss-w-spin">Memperbarui saldo &amp; kuota&hellip;</span>
         </div>
       </div>
       <div class="ss-card">
         <h2>Paket Aktif &amp; Sisa Kuota</h2>
-        <div id="ss-w-quotas" class="ss-qgrid"><p class="ss-note">Memuat&hellip;</p></div>
+        <div id="ss-w-quotas" class="ss-qgrid"><p class="ss-note">Memuat saldo &amp; kuota dari XL&hellip;</p><div class="ss-loadbar"><i></i></div></div>
       </div>
       </div>
       <aside class="ss-wside">
@@ -199,7 +209,7 @@
       <div id="ss-family-info" style="margin-top:12px"></div>
       <div id="ss-opt-search-row" style="display:none;margin-top:10px"><input class="ss-input" id="ss-opt-search" type="text" placeholder="Cari paket di family ini&hellip;" autocomplete="off"></div>
       <div id="ss-options" style="margin-top:8px"></div>
-      <span class="ss-spin" id="ss-b-spin">Memuat paket&hellip;</span>
+      <span class="ss-spin" id="ss-b-spin">Mencari paket di XL&hellip;</span>
     </div>
 
     <div class="ss-card" id="ss-confirm" style="display:none">
@@ -220,7 +230,7 @@
         <button class="ss-btn primary" id="ss-btn-buy" type="button">Beli Sekarang</button>
         <button class="ss-btn" id="ss-btn-savebm" type="button">&#11088; Simpan sebagai Bookmark</button>
         <button class="ss-btn" id="ss-btn-cancelbuy" type="button">Batal</button>
-        <span class="ss-spin" id="ss-c-spin">Memproses&hellip;</span>
+        <span class="ss-spin" id="ss-c-spin">Memproses pembelian&hellip;</span>
       </div>
       <div class="ss-result" id="ss-buy-result"></div>
     </div>
@@ -231,10 +241,10 @@
     <div class="ss-card">
       <h2>Transaksi Pending &mdash; Belum Dibayar</h2>
       <p class="ss-note" style="margin-bottom:12px">Daftar transaksi QRIS / e-wallet yang belum dibayar, langsung dari XL. Pending yang menumpuk bisa membuat pembelian baru ditolak XL (error 135) &mdash; selesaikan atau biarkan kedaluwarsa.</p>
-      <div id="ss-pending-list"><p class="ss-note">Memuat&hellip;</p></div>
+      <div id="ss-pending-list"><p class="ss-note">Memuat transaksi pending&hellip;</p><div class="ss-loadbar"><i></i></div></div>
       <div class="ss-btnrow">
         <button class="ss-btn" id="ss-btn-pending-refresh" type="button">&#8635; Refresh Pending</button>
-        <span class="ss-spin" id="ss-p-spin">Memuat&hellip;</span>
+        <span class="ss-spin" id="ss-p-spin">Memuat transaksi pending&hellip;</span>
       </div>
       <div class="ss-result" id="ss-pending-qr"></div>
     </div>
@@ -251,10 +261,10 @@
       <div class="ss-btnrow" style="margin-top:0">
         <button class="ss-btn primary" id="ss-btn-notif-readall" type="button">Tandai Semua Dibaca</button>
         <button class="ss-btn" id="ss-btn-notif-refresh" type="button">&#8635; Refresh</button>
-        <span class="ss-spin" id="ss-n-spin">Memproses&hellip;</span>
+        <span class="ss-spin" id="ss-n-spin">Memuat notifikasi&hellip;</span>
       </div>
       <p class="ss-note" style="margin-top:10px">Hanya menampilkan yang belum dibaca. Klik notifikasi untuk menandainya sudah dibaca.</p>
-      <div id="ss-notif-list" class="ss-ngrid" style="margin-top:10px"><p class="ss-note">Memuat&hellip;</p></div>
+      <div id="ss-notif-list" class="ss-ngrid" style="margin-top:10px"><p class="ss-note">Memuat notifikasi dari XL&hellip;</p><div class="ss-loadbar"><i></i></div></div>
     </div>
   </div>
 
@@ -262,10 +272,10 @@
   <div id="tab-bookmark" style="display:none">
     <div class="ss-card">
       <h2>Bookmark &mdash; Template Beli</h2>
-      <div id="ss-bookmark-list"><p class="ss-note">Memuat&hellip;</p></div>
+      <div id="ss-bookmark-list"><p class="ss-note">Memuat bookmark&hellip;</p><div class="ss-loadbar"><i></i></div></div>
       <div class="ss-btnrow">
         <button class="ss-btn" id="ss-btn-bm-refresh" type="button">&#8635; Refresh Bookmark</button>
-        <span class="ss-spin" id="ss-bm-spin">Memuat&hellip;</span>
+        <span class="ss-spin" id="ss-bm-spin">Memuat bookmark&hellip;</span>
       </div>
     </div>
 
@@ -282,7 +292,7 @@
       <div class="ss-btnrow">
         <button class="ss-btn primary" id="ss-btn-bmc-buy" type="button">Beli Sekarang</button>
         <button class="ss-btn" id="ss-btn-bmc-cancel" type="button">Batal</button>
-        <span class="ss-spin" id="ss-bmc-spin">Memproses&hellip;</span>
+        <span class="ss-spin" id="ss-bmc-spin">Memproses pembelian&hellip;</span>
       </div>
       <div class="ss-result" id="ss-bmc-result"></div>
     </div>
@@ -299,7 +309,7 @@
       <div class="ss-btnrow">
         <button class="ss-btn primary" id="ss-btn-bme-save" type="button">Simpan</button>
         <button class="ss-btn" id="ss-btn-bme-cancel" type="button">Batal</button>
-        <span class="ss-spin" id="ss-bme-spin">Menyimpan&hellip;</span>
+        <span class="ss-spin" id="ss-bme-spin">Menyimpan bookmark&hellip;</span>
       </div>
     </div>
   </div>
@@ -316,7 +326,7 @@
       <p class="ss-note" style="margin-top:8px">Secret ditampilkan sebagai titik-titik. Tersimpan di perangkat ini (UCI <b>sunset</b>) dan hanya dikirim ke backend-mu sendiri sebagai header <b>x-luci-secret</b>. Key XL tidak pernah ada di perangkat ini.</p>
       <div class="ss-btnrow">
         <button class="ss-btn primary" id="ss-btn-saveset" type="button">Simpan Pengaturan</button>
-        <span class="ss-spin" id="ss-set-spin">Menyimpan&hellip;</span>
+        <span class="ss-spin" id="ss-set-spin">Menyimpan pengaturan&hellip;</span>
       </div>
     </div>
 
@@ -330,7 +340,7 @@
       <div class="ss-btnrow">
         <button class="ss-btn" id="ss-btn-check" type="button">Cek Update</button>
         <button class="ss-btn primary" id="ss-btn-update" type="button" style="display:none">Update Sekarang</button>
-        <span class="ss-spin" id="ss-ver-spin">Memeriksa&hellip;</span>
+        <span class="ss-spin" id="ss-ver-spin">Memeriksa versi terbaru&hellip;</span>
       </div>
       <pre class="ss-log" id="ss-ver-log" style="display:none"></pre>
       <p class="ss-note" id="ss-ver-done" style="display:none;margin-top:10px"><b>Update selesai.</b> Hard refresh halaman ini (Ctrl+F5). Kalau halaman tidak bisa dibuka, pasang ulang lewat one-liner curl di README repo.</p>
@@ -425,6 +435,17 @@ function errMsg(j, fallback){
   return fallback || "Terjadi kesalahan.";
 }
 
+/* ---------- indikator aktivitas global (bar di atas panel) ---------- */
+var busyN = 0;
+function busyStart(){
+  busyN++;
+  var p = $("ss-progress"); if (p) p.classList.add("on");
+}
+function busyEnd(){
+  busyN = Math.max(0, busyN - 1);
+  if (busyN === 0) { var p = $("ss-progress"); if (p) p.classList.remove("on"); }
+}
+
 /* ---------- panggilan backend Vercel ---------- */
 function api(path, method, body){
   var opts = {
@@ -435,26 +456,44 @@ function api(path, method, body){
     opts.headers["Content-Type"] = "application/json";
     opts.body = JSON.stringify(body);
   }
+  busyStart();
   return fetch(cfg.api_url.replace(/\/+$/, "") + path, opts).then(function(r){
     return r.json().catch(function(){ return { ok: false, error: "Respons backend tidak valid (HTTP " + r.status + ")." }; });
   }).catch(function(){
     return { ok: false, error: "Tidak bisa menghubungi backend. Cek koneksi internet & URL di tab Pengaturan." };
+  }).then(function(j){
+    busyEnd();
+    return j;
   });
 }
 
 /* ---------- panggilan controller lokal LuCI ---------- */
 function getLocal(url){
-  return fetch(url, { credentials: "same-origin" }).then(function(r){ return r.json(); });
+  busyStart();
+  return fetch(url, { credentials: "same-origin" }).then(function(r){ return r.json(); }).then(function(j){
+    busyEnd();
+    return j;
+  }, function(e){
+    busyEnd();
+    throw e;
+  });
 }
 function postLocal(url, data){
   var body = "token=" + encodeURIComponent(CSRF_TOKEN);
   Object.keys(data || {}).forEach(function(k){
     body += "&" + encodeURIComponent(k) + "=" + encodeURIComponent(data[k]);
   });
+  busyStart();
   return fetch(url, { method: "POST", credentials: "same-origin",
     headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body
   }).then(function(r){
     return r.json().catch(function(){ return { ok: false, error: "HTTP " + r.status }; });
+  }).then(function(j){
+    busyEnd();
+    return j;
+  }, function(e){
+    busyEnd();
+    throw e;
   });
 }
 
@@ -801,6 +840,7 @@ function renderOptions(){
 }
 function startQuote(opt){
   if (!opt) return;
+  $("ss-c-spin").textContent = "Memuat detail paket\u2026";
   $("ss-c-spin").style.display = "inline";
   api("/api/luci/buy/quote", "POST", {
     option_code: opt.option_code,
@@ -856,6 +896,7 @@ function doBuy(){
     variant_code: ctx.opt.variant_code
   };
   if (ow.filled) body.overwrite_price = ow.value;
+  $("ss-c-spin").textContent = "Memproses pembelian\u2026";
   $("ss-c-spin").style.display = "inline";
   $("ss-btn-buy").disabled = true;
   api("/api/luci/buy", "POST", body).then(function(j){
@@ -883,6 +924,7 @@ function saveBookmarkFromBuy(){
     method: $("ss-c-method").value
   };
   if (ow.filled) bm.overwrite_price = ow.value;
+  $("ss-c-spin").textContent = "Menyimpan bookmark\u2026";
   $("ss-c-spin").style.display = "inline";
   $("ss-btn-savebm").disabled = true;
   api("/api/luci/bookmarks", "POST", bm).then(function(j){
@@ -969,6 +1011,7 @@ function prefetchNotifications(){
   }).catch(function(){});
 }
 function loadNotifications(){
+  $("ss-n-spin").textContent = "Memuat notifikasi\u2026";
   $("ss-n-spin").style.display = "inline";
   api("/api/luci/notifications").then(function(j){
     $("ss-n-spin").style.display = "none";
@@ -1009,6 +1052,7 @@ function renderNotifications(){
 }
 function markNotifRead(id){
   if (!id) return;
+  $("ss-n-spin").textContent = "Menandai sudah dibaca\u2026";
   $("ss-n-spin").style.display = "inline";
   api("/api/luci/notifications/read", "POST", { notification_id: id }).then(function(j){
     $("ss-n-spin").style.display = "none";
@@ -1020,6 +1064,7 @@ function markNotifRead(id){
 }
 function notifReadAll(){
   if (unreadCount() === 0) { toast("Tidak ada notifikasi yang belum dibaca."); return; }
+  $("ss-n-spin").textContent = "Menandai semua dibaca\u2026";
   $("ss-n-spin").style.display = "inline";
   $("ss-btn-notif-readall").disabled = true;
   api("/api/luci/notifications/read", "POST", { all: true }).then(function(j){
@@ -1034,6 +1079,7 @@ function notifReadAll(){
 
 /* ---------- pending (transaksi belum dibayar) ---------- */
 function loadPending(){
+  $("ss-p-spin").textContent = "Memuat transaksi pending\u2026";
   $("ss-p-spin").style.display = "inline";
   api("/api/luci/pending").then(function(j){
     $("ss-p-spin").style.display = "none";
@@ -1090,6 +1136,7 @@ function showPendingQr(i){
   var p = state.pendingList[i]; if (!p || !p.payment_id) return;
   var el = $("ss-pending-qr");
   el.className = "ss-result"; el.innerHTML = "";
+  $("ss-p-spin").textContent = "Memuat kode QR\u2026";
   $("ss-p-spin").style.display = "inline";
   api("/api/luci/pending/qr", "POST", { payment_id: p.payment_id }).then(function(j){
     $("ss-p-spin").style.display = "none";
