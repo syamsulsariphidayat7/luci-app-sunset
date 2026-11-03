@@ -41,6 +41,10 @@
 .ss-qitem .qn{font-weight:700;font-size:14.5px}
 .ss-qitem .qm{font-size:12.5px;color:var(--ss-muted);margin-top:2px}
 .ss-qitem.critical{border-color:#e07f00;border-left:5px solid #d43a31;background:#fffaf4}
+.ss-qgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ss-qgrid .ss-qitem{margin-bottom:0}
+.ss-qgrid>.ss-note{grid-column:1/-1}
+@media (max-width:640px){.ss-qgrid{grid-template-columns:1fr}}
 .ss-qremain{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
 .ss-qbadge{display:inline-block;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:800;color:#fff;background:var(--ss-green)}
 .ss-qbadge.warn{background:var(--ss-amber)}
@@ -142,7 +146,7 @@
       </div>
       <div class="ss-card">
         <h2>Paket Aktif &amp; Sisa Kuota</h2>
-        <div id="ss-w-quotas"><p class="ss-note">Memuat&hellip;</p></div>
+        <div id="ss-w-quotas" class="ss-qgrid"><p class="ss-note">Memuat&hellip;</p></div>
       </div>
       </div>
       <aside class="ss-wside">
