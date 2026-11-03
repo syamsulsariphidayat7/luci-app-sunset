@@ -5,7 +5,7 @@
 .ss-title{margin:0;font-size:28px;letter-spacing:2px;font-family:ui-monospace,Menlo,monospace}
 .ss-title .ss-mark{background:var(--ss-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 .ss-sub{margin:4px 0 0;color:var(--ss-muted);font-size:13px}
-.ss-pill{display:inline-flex;align-items:center;gap:8px;background:var(--ss-card);border:1px solid var(--ss-border);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600}
+.ss-pill{display:inline-flex;align-items:center;gap:8px;background:#fff !important;color:var(--ss-text) !important;border:1px solid var(--ss-border);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;white-space:nowrap;flex:0 0 auto}
 .ss-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .ss-tab{appearance:none;border:1px solid var(--ss-border);background:var(--ss-card);color:var(--ss-text);border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
 .ss-tab.active{background:var(--ss-grad135);border-color:transparent;color:#fff}
@@ -50,6 +50,11 @@
 .ss-qgrid .ss-qitem{margin-bottom:0}
 .ss-qgrid>.ss-note{grid-column:1/-1}
 @media (max-width:640px){.ss-qgrid{grid-template-columns:1fr}}
+.ss-notif-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.ss-stat{flex:1;min-width:130px;border:1px solid var(--ss-border);border-radius:12px;padding:10px 14px;background:#fbfcfe}
+.ss-stat .sv{font-size:24px;font-weight:800;line-height:1.1}
+.ss-stat .sk{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--ss-muted);margin-top:2px}
+.ss-stat.alert .sv{color:var(--ss-red)}
 .ss-tab-badge{display:inline-block;background:var(--ss-red);color:#fff;border-radius:999px;padding:0 7px;font-size:11px;font-weight:800;margin-left:5px;vertical-align:1px}
 .ss-qitem.unread{border-color:#e07f00;border-left:5px solid #e07f00;background:#fffaf4}
 .ss-copybtn{appearance:none;border:1px solid var(--ss-border);background:#fff;color:var(--ss-muted);border-radius:6px;padding:0 7px;font-size:11px;font-weight:600;cursor:pointer;vertical-align:1px;line-height:1.8}
@@ -160,11 +165,6 @@
         <h2>Paket Aktif &amp; Sisa Kuota</h2>
         <div id="ss-w-quotas" class="ss-qgrid"><p class="ss-note">Memuat&hellip;</p></div>
       </div>
-      <div class="ss-card" id="ss-quickbm-card" style="display:none">
-        <h2>Bookmark Cepat</h2>
-        <div class="ss-btnrow" id="ss-quickbm-list" style="margin-top:0"></div>
-        <p class="ss-note" style="margin-top:8px">Klik untuk beli langsung &mdash; konfirmasi tetap muncul dulu sebelum dibeli.</p>
-      </div>
       </div>
       <aside class="ss-wside">
         <div class="ss-card" id="ss-attn-card" style="display:none">
@@ -233,13 +233,17 @@
   <div id="tab-notifikasi" style="display:none">
     <div class="ss-card">
       <h2>Notifikasi XL</h2>
-      <p class="ss-note" id="ss-notif-summary">Kotak masuk notifikasi dari XL untuk nomor aktif (bonus kuota, info paket, pengingat).</p>
-      <div id="ss-notif-list" style="margin-top:10px"><p class="ss-note">Memuat&hellip;</p></div>
-      <div class="ss-btnrow">
+      <div class="ss-notif-stats">
+        <div class="ss-stat"><div class="sv" id="ss-notif-total">-</div><div class="sk">Total Notifikasi</div></div>
+        <div class="ss-stat" id="ss-notif-unread-stat"><div class="sv" id="ss-notif-unread">-</div><div class="sk">Belum Dibaca</div></div>
+      </div>
+      <div class="ss-btnrow" style="margin-top:0">
         <button class="ss-btn primary" id="ss-btn-notif-readall" type="button">Tandai Semua Dibaca</button>
         <button class="ss-btn" id="ss-btn-notif-refresh" type="button">&#8635; Refresh</button>
         <span class="ss-spin" id="ss-n-spin">Memproses&hellip;</span>
       </div>
+      <p class="ss-note" style="margin-top:10px">Klik notifikasi yang belum dibaca untuk menandainya sudah dibaca.</p>
+      <div id="ss-notif-list" class="ss-qgrid" style="margin-top:10px"><p class="ss-note">Memuat&hellip;</p></div>
     </div>
   </div>
 
@@ -633,7 +637,6 @@ function renderWelcome(w){
   });
   $("ss-w-totalquota").textContent = fmtBytes(totRem) + (anyUnlim ? " + Unlimited" : "");
   loadPendingBanner();
-  if (!state.bookmarksLoaded) loadBookmarks();
   if (!state.notifLoaded) prefetchNotifications();
 }
 function renderSwitcher(){
@@ -917,7 +920,9 @@ function loadNotifications(){
 function renderNotifications(){
   var list = state.notifications || [];
   var un = unreadCount();
-  $("ss-notif-summary").textContent = "Total " + list.length + " notifikasi · " + un + " belum dibaca. Klik notifikasi yang belum dibaca untuk menandainya sudah dibaca.";
+  $("ss-notif-total").textContent = list.length;
+  $("ss-notif-unread").textContent = un;
+  $("ss-notif-unread-stat").classList.toggle("alert", un > 0);
   var el = $("ss-notif-list");
   if (!list.length) {
     el.innerHTML = '<p class="ss-note">Tidak ada notifikasi.</p>';
@@ -927,10 +932,8 @@ function renderNotifications(){
     var head = '<div class="qn">' + esc(n.brief_message || "(tanpa judul)") +
       (n.is_read ? "" : ' <span class="ss-qbadge crit" style="font-size:11px;padding:1px 9px">Baru</span>') + "</div>";
     var time = '<div class="qm">' + esc(fmtIsoTime(n.timestamp)) + "</div>";
-    var body = n.full_message ? '<div style="font-size:13.5px;margin-top:5px;line-height:1.55">' + esc(n.full_message) + "</div>" : "";
-    if (n.is_read) return '<div class="ss-qitem">' + head + time + body + "</div>";
-    return '<div class="ss-qitem unread" data-notif-id="' + esc(n.notification_id) + '" style="cursor:pointer" title="Klik untuk tandai sudah dibaca">' + head + time + body +
-      '<div class="qm" style="margin-top:4px">Klik untuk tandai sudah dibaca</div></div>';
+    if (n.is_read) return '<div class="ss-qitem">' + head + time + "</div>";
+    return '<div class="ss-qitem unread" data-notif-id="' + esc(n.notification_id) + '" style="cursor:pointer" title="Klik untuk tandai sudah dibaca">' + head + time + "</div>";
   }).join("");
   var items = el.querySelectorAll("[data-notif-id]");
   for (var i = 0; i < items.length; i++) {
@@ -1059,25 +1062,6 @@ function loadBookmarks(){
   });
 }
 function renderBookmarks(){
-  var qcard = $("ss-quickbm-card"), qlist = $("ss-quickbm-list");
-  if (qcard && qlist) {
-    if (!state.bookmarks.length) {
-      qcard.style.display = "none";
-    } else {
-      qcard.style.display = "";
-      qlist.innerHTML = state.bookmarks.map(function(b, i){
-        return '<button class="ss-btn small" type="button" data-qb="' + i + '">' + esc(bookmarkTitle(b)) + " &middot; " + fmtRp(bookmarkPrice(b)) + "</button>";
-      }).join("");
-      var qbs = qlist.querySelectorAll("[data-qb]");
-      for (var qi = 0; qi < qbs.length; qi++) {
-        qbs[qi].addEventListener("click", function(){
-          var idx = Number(this.getAttribute("data-qb"));
-          showTab("bookmark");
-          openBmConfirm(idx);
-        });
-      }
-    }
-  }
   var el = $("ss-bookmark-list");
   if (!state.bookmarks.length) {
     el.innerHTML = '<p class="ss-note">Belum ada bookmark. Simpan dari layar konfirmasi di tab Beli lewat tombol "Simpan sebagai Bookmark". Maksimal 50 bookmark per nomor.</p>';
