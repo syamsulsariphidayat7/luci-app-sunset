@@ -1,6 +1,6 @@
 <%+header%>
 <style>
-.ss-wrap{--ss-grad:linear-gradient(90deg,#0B486B,#F56217);--ss-grad135:linear-gradient(135deg,#0B486B,#F56217);--ss-card:#ffffff;--ss-border:#d3dae2;--ss-text:#1b2330;--ss-muted:#5c6a7a;--ss-green:#1d9d57;--ss-red:#d43a31;--ss-amber:#e07f00;--ss-bg:#eef2f6;max-width:1080px;margin:0 auto;padding:20px 16px 60px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ss-text)}
+.ss-wrap{--ss-grad:linear-gradient(90deg,#0B486B,#F56217);--ss-grad135:linear-gradient(135deg,#0B486B,#F56217);--ss-card:#ffffff;--ss-border:#d3dae2;--ss-text:#1b2330;--ss-muted:#5c6a7a;--ss-green:#1d9d57;--ss-red:#d43a31;--ss-amber:#e07f00;--ss-bg:#eef2f6;margin:0;padding:20px 20px 60px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ss-text)}
 .ss-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .ss-title{margin:0;font-size:28px;letter-spacing:2px;font-family:ui-monospace,Menlo,monospace}
 .ss-title .ss-mark{background:var(--ss-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -59,6 +59,10 @@
 .ss-spin{display:none;font-size:13px;color:var(--ss-muted)}
 .ss-foot{font-size:12px;color:var(--ss-muted);text-align:center;line-height:1.7;margin-top:8px}
 @media (max-width:600px){.ss-opt .op{font-size:15px}}
+.ss-wgrid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:0 14px;align-items:start}
+.ss-wside{position:sticky;top:12px}
+.ss-wside .ss-card{margin-bottom:0}
+@media (max-width:960px){.ss-wgrid{grid-template-columns:1fr}.ss-wside{position:static}}
 </style>
 
 <div class="ss-wrap">
@@ -74,7 +78,6 @@
 
   <div class="ss-tabs" id="ss-tabs">
     <button class="ss-tab active" type="button" data-tab="welcome">Welcome</button>
-    <button class="ss-tab" type="button" data-tab="kuota">Kuota</button>
     <button class="ss-tab" type="button" data-tab="beli">Beli</button>
     <button class="ss-tab" type="button" data-tab="pending">Pending</button>
     <button class="ss-tab" type="button" data-tab="bookmark">Bookmark</button>
@@ -107,6 +110,8 @@
     </div>
 
     <div id="ss-welcome-main" style="display:none">
+     <div class="ss-wgrid">
+      <div class="ss-wmain">
       <div class="ss-card">
         <h2>Akun Aktif</h2>
         <div class="ss-rows">
@@ -128,26 +133,18 @@
           <span class="ss-spin" id="ss-w-spin">Memperbarui&hellip;</span>
         </div>
       </div>
-      <div class="ss-card" id="ss-attn-card" style="display:none">
-        <h2>&#9888;&#65038; Perlu Perhatian</h2>
-        <div id="ss-attn-list"></div>
-      </div>
       <div class="ss-card">
-        <h2>Ringkasan Kuota</h2>
+        <h2>Paket Aktif &amp; Sisa Kuota</h2>
         <div id="ss-w-quotas"><p class="ss-note">Memuat&hellip;</p></div>
       </div>
-    </div>
-  </div>
-
-  <!-- ================= TAB KUOTA ================= -->
-  <div id="tab-kuota" style="display:none">
-    <div class="ss-card">
-      <h2>Paket Aktif &amp; Sisa Kuota</h2>
-      <div id="ss-quota-list"><p class="ss-note">Memuat&hellip;</p></div>
-      <div class="ss-btnrow">
-        <button class="ss-btn" id="ss-btn-quota-refresh" type="button">&#8635; Refresh Kuota</button>
-        <span class="ss-spin" id="ss-q-spin">Memperbarui&hellip;</span>
       </div>
+      <aside class="ss-wside">
+        <div class="ss-card" id="ss-attn-card" style="display:none">
+          <h2>&#9888;&#65038; Perlu Perhatian</h2>
+          <div id="ss-attn-list"></div>
+        </div>
+      </aside>
+     </div>
     </div>
   </div>
 
@@ -160,7 +157,7 @@
         <input class="ss-input" id="ss-family-input" type="text" placeholder="cth. FAM123 / UUID" autocomplete="off" style="flex:1;min-width:200px">
         <button class="ss-btn primary" id="ss-btn-family" type="button">Cari Paket</button>
       </div>
-      <p class="ss-note" style="margin-top:10px">Family code bisa dilihat di tab Kuota (di tiap paket aktif) atau di aplikasi MyXL.</p>
+      <p class="ss-note" style="margin-top:10px">Family code bisa dilihat di Welcome (di tiap paket aktif) atau di aplikasi MyXL.</p>
       <div id="ss-family-info" style="margin-top:12px"></div>
       <div id="ss-options" style="margin-top:8px"></div>
       <span class="ss-spin" id="ss-b-spin">Memuat paket&hellip;</span>
@@ -320,7 +317,7 @@ function methodLabel(m){
 var cfg = { api_url: "", secret: "", has_secret: false };
 var state = {
   accounts: [], activeNumber: null,
-  welcomeLoaded: false, quotaLoaded: false, bookmarksLoaded: false, pendingLoaded: false,
+  welcomeLoaded: false, bookmarksLoaded: false, pendingLoaded: false,
   welcome: null, bookmarks: [], pendingList: [],
   latestTag: null, updateTimer: null,
   pendingNumber: null,
@@ -407,14 +404,13 @@ function postLocal(url, data){
 /* ---------- tab ---------- */
 function showTab(name){
   state.currentTab = name;
-  ["welcome","kuota","beli","pending","bookmark","pengaturan"].forEach(function(t){
+  ["welcome","beli","pending","bookmark","pengaturan"].forEach(function(t){
     $("tab-" + t).style.display = (t === name) ? "" : "none";
   });
   var tabs = $("ss-tabs").children;
   for (var i = 0; i < tabs.length; i++) {
     tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
   }
-  if (name === "kuota" && !state.quotaLoaded && cfg.has_secret) loadQuota();
   if (name === "pending" && !state.pendingLoaded && cfg.has_secret) loadPending();
   if (name === "bookmark" && !state.bookmarksLoaded && cfg.has_secret) loadBookmarks();
 }
@@ -531,7 +527,7 @@ function renderWelcome(w){
   var bexp = w.balance ? fmtDate(w.balance.expired_at) : "";
   $("ss-w-balance-exp").textContent = bexp ? ("Saldo berlaku s/d " + bexp + ".") : "";
   $("ss-pill").textContent = w.number != null ? ("Aktif: " + w.number) : "Sunset";
-  renderQuotaList($("ss-w-quotas"), w.quotas || [], false);
+  renderQuotaList($("ss-w-quotas"), w.quotas || [], true);
   renderAttention(w);
   renderSwitcher();
 }
@@ -579,7 +575,6 @@ function loadAccounts(){
 function refreshAll(){
   showAlert("", "");
   loadAccounts().then(loadWelcome).then(function(){
-    if (state.currentTab === "kuota") { state.quotaLoaded = false; loadQuota(); }
     toast("Data diperbarui.");
   });
 }
@@ -612,22 +607,8 @@ function verifyOtp(){
     $("ss-btn-verify").disabled = false;
     if (!j.ok) { showAlert("err", errMsg(j, "Verifikasi OTP gagal.")); return; }
     toast("Login berhasil: " + (j.number || state.pendingNumber));
-    state.quotaLoaded = false; state.bookmarksLoaded = false; state.pendingLoaded = false;
+    state.bookmarksLoaded = false; state.pendingLoaded = false;
     refreshAll();
-  });
-}
-
-/* ---------- kuota ---------- */
-function loadQuota(){
-  $("ss-q-spin").style.display = "inline";
-  api("/api/luci/quota").then(function(j){
-    $("ss-q-spin").style.display = "none";
-    if (!j.ok) {
-      $("ss-quota-list").innerHTML = '<p class="ss-note">' + esc(errMsg(j, "Gagal memuat kuota.")) + "</p>";
-      return;
-    }
-    state.quotaLoaded = true;
-    renderQuotaList($("ss-quota-list"), j.quotas || [], true);
   });
 }
 
@@ -748,7 +729,7 @@ function doBuy(){
     $("ss-c-spin").style.display = "none";
     $("ss-btn-buy").disabled = false;
     showBuyResult($("ss-buy-result"), j);
-    if (j.ok) { state.quotaLoaded = false; state.welcomeLoaded = false; state.pendingLoaded = false; }
+    if (j.ok) { state.welcomeLoaded = false; state.pendingLoaded = false; }
   });
 }
 function saveBookmarkFromBuy(){
@@ -932,7 +913,7 @@ function doBmBuy(){
     $("ss-bmc-spin").style.display = "none";
     $("ss-btn-bmc-buy").disabled = false;
     showBuyResult($("ss-bmc-result"), j);
-    if (j.ok) { state.quotaLoaded = false; state.welcomeLoaded = false; state.pendingLoaded = false; }
+    if (j.ok) { state.welcomeLoaded = false; state.pendingLoaded = false; }
   });
 }
 function openBmEdit(i){
@@ -1022,7 +1003,7 @@ function saveSettings(){
     $("ss-secret-notice").style.display = cfg.has_secret ? "none" : "";
     toast("Pengaturan tersimpan.");
     if (cfg.has_secret) {
-      state.welcomeLoaded = false; state.quotaLoaded = false; state.bookmarksLoaded = false;
+      state.welcomeLoaded = false; state.bookmarksLoaded = false;
       showTab("welcome");
       refreshAll();
     }
@@ -1116,13 +1097,12 @@ function init(){
     $("ss-login-step1").style.display = "";
   });
   $("ss-btn-refresh").addEventListener("click", refreshAll);
-  $("ss-btn-quota-refresh").addEventListener("click", function(){ state.quotaLoaded = false; loadQuota(); });
   $("ss-btn-switch").addEventListener("click", function(){
     var num = $("ss-account-select").value;
     api("/api/luci/accounts/active", "POST", { number: num }).then(function(j){
       if (!j.ok) { showAlert("err", errMsg(j, "Gagal mengganti nomor aktif.")); return; }
       state.activeNumber = j.active_number;
-      state.quotaLoaded = false; state.bookmarksLoaded = false; state.pendingLoaded = false;
+      state.bookmarksLoaded = false; state.pendingLoaded = false;
       refreshAll();
     });
   });
