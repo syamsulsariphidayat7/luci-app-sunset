@@ -354,7 +354,6 @@ var URL_UPDATELOG = "<%=luci.dispatcher.build_url("admin", "services", "sunset",
 
 /* Ambang peringatan kritis (fitur "Perlu Perhatian"). */
 var QUOTA_PCT_CRITICAL = 10;   /* sisa kuota <= nilai ini (%) dianggap kritis */
-var QUOTA_DAYS_CRITICAL = 3;   /* kuota berakhir <= nilai ini (hari) dianggap kritis */
 var BALANCE_DAYS_CRITICAL = 7; /* saldo berakhir <= nilai ini (hari) dianggap kritis */
 var DAY_SEC = 86400;
 
@@ -498,17 +497,13 @@ function expiryReason(ts, label){
   if (d === 0) return label + " berakhir hari ini";
   return label + " berakhir dalam " + d + " hari";
 }
-/* Daftar alasan kritis satu kuota; kosong = sehat. Paket unlimited
-   (remaining_pct null) hanya dinilai dari masa berlakunya. */
+/* Daftar alasan kritis satu kuota; kosong = sehat. Penilaian MURNI
+   dari sisa persen (keputusan Syamsul 2026-11-03): masa berlaku tidak
+   lagi membuat paket kritis. Paket unlimited tidak pernah kritis. */
 function quotaCritical(q){
   var reasons = [];
   if (!q.unlimited && q.remaining_pct != null && q.remaining_pct <= QUOTA_PCT_CRITICAL) {
     reasons.push("Sisa kuota tinggal " + q.remaining_pct + "%");
-  }
-  var d = daysLeft(q.expired_at);
-  if (d != null && d <= QUOTA_DAYS_CRITICAL) {
-    var r = expiryReason(q.expired_at, "Masa berlaku");
-    if (r) reasons.push(r);
   }
   return reasons;
 }
