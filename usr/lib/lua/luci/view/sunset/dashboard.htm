@@ -41,6 +41,13 @@
 .ss-qitem .qn{font-weight:700;font-size:14.5px}
 .ss-qitem .qm{font-size:12.5px;color:var(--ss-muted);margin-top:2px}
 .ss-qitem.critical{border-color:#e07f00;border-left:5px solid #d43a31;background:#fffaf4}
+.ss-qremain{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+.ss-qbadge{display:inline-block;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:800;color:#fff;background:var(--ss-green)}
+.ss-qbadge.warn{background:var(--ss-amber)}
+.ss-qbadge.crit{background:var(--ss-red)}
+.ss-qof{font-size:12.5px;color:var(--ss-muted)}
+.ss-bar>i.warn{background:#e07f00}
+.ss-bar>i.crit{background:#d43a31}
 .ss-crit{display:inline-block;background:linear-gradient(135deg,#e07f00,#d43a31);color:#fff;border-radius:999px;padding:1px 9px;font-size:11px;font-weight:700;margin-left:8px;vertical-align:2px}
 .ss-attn-item{border:1px solid #f3d3a4;border-left:5px solid #e07f00;border-radius:12px;padding:11px 14px;margin-bottom:9px;background:#fdf6e8;font-size:13.5px;line-height:1.5}
 .ss-attn-item b{font-size:14px}
@@ -483,14 +490,23 @@ function quotaItemHtml(q, full){
     (crit.length ? '<span class="ss-crit">Kritis</span>' : "") + "</div>";
   var meta = [];
   if (q.group_name && q.group_name !== q.name) meta.push(esc(q.group_name));
-  if (q.unlimited) meta.push("Tanpa batas");
-  else meta.push("Sisa " + fmtBytes(q.remaining_bytes) + " dari " + fmtBytes(q.total_bytes) + (q.remaining_pct != null ? " (" + q.remaining_pct + "%)" : ""));
   var exp = fmtDate(q.expired_at);
   if (exp) meta.push("Berlaku s/d " + exp);
   if (q.family_code) meta.push("Family: " + esc(q.family_code));
   html += '<div class="qm">' + meta.join(" &middot; ") + "</div>";
   var pct = q.unlimited ? 100 : (q.remaining_pct == null ? 0 : Math.max(0, Math.min(100, q.remaining_pct)));
-  html += '<div class="ss-bar"><i style="width:' + pct + '%"></i></div>';
+  var lvl = "ok";
+  if (!q.unlimited && q.remaining_pct != null) {
+    if (q.remaining_pct <= 10) lvl = "crit";
+    else if (q.remaining_pct <= 25) lvl = "warn";
+  }
+  if (q.unlimited) {
+    html += '<div class="ss-qremain"><span class="ss-qbadge ok">Tanpa batas</span></div>';
+  } else {
+    html += '<div class="ss-qremain"><span class="ss-qbadge ' + lvl + '">Sisa ' + fmtBytes(q.remaining_bytes) + "</span>" +
+      '<span class="ss-qof">dari ' + fmtBytes(q.total_bytes) + (q.remaining_pct != null ? " (" + q.remaining_pct + "%)" : "") + "</span></div>";
+  }
+  html += '<div class="ss-bar"><i' + (lvl === "ok" ? "" : ' class="' + lvl + '"') + ' style="width:' + pct + '%"></i></div>';
   if (full && q.family_code) {
     html += '<div class="ss-btnrow"><button class="ss-btn small" type="button" data-buy-family="' + esc(q.family_code) + '">Beli Lagi dari Family Ini</button></div>';
   }
