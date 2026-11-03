@@ -145,13 +145,46 @@ local function get_settings()
 	}
 end
 
+-- Skema warna tema Boundless (UCI boundlesstheme.settings.scheme) —
+-- panel Sunset mengikuti gradien skema yang sedang aktif di tema,
+-- termasuk skema "custom" (custom_c1/custom_c2). Tabel warna sama
+-- seperti di controller boundlesstheme.
+local THEME_SCHEMES = {
+	["bawaan"]      = { "#29445e", "#89253e" },
+	["pun-yeta"]    = { "#0b486b", "#ef8e38" },
+	["sand-to-blue"] = { "#3e5151", "#decba4" },
+	["purplepine"]  = { "#20002c", "#cbb4d4" },
+	["deep-space"]  = { "#000000", "#434343" },
+}
+
+local function theme_gradient()
+	local uci = luci.model.uci.cursor()
+	local id = uci:get("boundlesstheme", "settings", "scheme")
+	if not id then return nil end
+	if id == "custom" then
+		local function hex(k, fb)
+			local v = uci:get("boundlesstheme", "settings", k)
+			if v and v:match("^#%x%x%x%x%x%x$") then return v:lower() end
+			return fb
+		end
+		return hex("custom_c1", "#29445e"), hex("custom_c2", "#89253e"), "custom"
+	end
+	local sc = THEME_SCHEMES[id]
+	if sc then return sc[1], sc[2], id end
+	return nil
+end
+
 -- GET /config — dibaca halaman saat load untuk tahu backend + secret.
 -- Secret memang ikut dibalas: halaman ini sudah di balik login LuCI dan
 -- browser membutuhkannya sebagai header x-luci-secret ke backend.
 function action_config()
 	local cfg = get_settings()
+	local tg1, tg2, tscheme = theme_gradient()
 	write_json({
 		ok = true,
+		theme_scheme = tscheme,
+		theme_g1 = tg1,
+		theme_g2 = tg2,
 		api_url = cfg.api_url,
 		secret = cfg.secret,
 		has_secret = cfg.secret ~= "",

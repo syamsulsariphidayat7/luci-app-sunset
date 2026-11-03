@@ -45,6 +45,8 @@
 .ss-qgrid .ss-qitem{margin-bottom:0}
 .ss-qgrid>.ss-note{grid-column:1/-1}
 @media (max-width:640px){.ss-qgrid{grid-template-columns:1fr}}
+.ss-copybtn{appearance:none;border:1px solid var(--ss-border);background:#fff;color:var(--ss-muted);border-radius:6px;padding:0 7px;font-size:11px;font-weight:600;cursor:pointer;vertical-align:1px;line-height:1.8}
+.ss-copybtn:hover{color:var(--ss-text)}
 .ss-qremain{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
 .ss-qbadge{display:inline-block;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:800;color:#fff;background:var(--ss-green)}
 .ss-qbadge.warn{background:var(--ss-amber)}
@@ -121,6 +123,7 @@
     </div>
 
     <div id="ss-welcome-main" style="display:none">
+      <div class="ss-alert warn" id="ss-pending-banner" style="display:none;cursor:pointer"></div>
      <div class="ss-wgrid">
       <div class="ss-wmain">
       <div class="ss-card">
@@ -130,6 +133,7 @@
           <div class="ss-kv"><div class="k">Saldo</div><div class="v big" id="ss-w-balance">-</div></div>
           <div class="ss-kv"><div class="k">Jenis</div><div class="v" id="ss-w-type">-</div></div>
           <div class="ss-kv"><div class="k">Tier / Poin</div><div class="v" id="ss-w-tier">-</div></div>
+          <div class="ss-kv"><div class="k">Total Sisa Kuota</div><div class="v big" id="ss-w-totalquota">-</div></div>
         </div>
         <p class="ss-note" id="ss-w-balance-exp" style="margin-top:10px"></p>
         <div id="ss-switcher" style="display:none">
@@ -147,6 +151,11 @@
       <div class="ss-card">
         <h2>Paket Aktif &amp; Sisa Kuota</h2>
         <div id="ss-w-quotas" class="ss-qgrid"><p class="ss-note">Memuat&hellip;</p></div>
+      </div>
+      <div class="ss-card" id="ss-quickbm-card" style="display:none">
+        <h2>Bookmark Cepat</h2>
+        <div class="ss-btnrow" id="ss-quickbm-list" style="margin-top:0"></div>
+        <p class="ss-note" style="margin-top:8px">Klik untuk beli langsung &mdash; konfirmasi tetap muncul dulu sebelum dibeli.</p>
       </div>
       </div>
       <aside class="ss-wside">
@@ -487,7 +496,25 @@ function renderAttention(w){
   $("ss-attn-card").style.display = items.length ? "" : "none";
 }
 
-/* ---------- render kuota (dipakai welcome & tab kuota) ---------- */
+/* ---------- salin teks (family code) ---------- */
+function copyText(txt){
+  if (!txt) return;
+  function done(){ toast("Family code tersalin: " + txt); }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(done).catch(function(){ fallbackCopy(txt, done); });
+  } else fallbackCopy(txt, done);
+}
+function fallbackCopy(txt, done){
+  var ta = document.createElement("textarea");
+  ta.value = txt;
+  ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); done(); } catch (e) { toast("Gagal menyalin, salin manual: " + txt); }
+  document.body.removeChild(ta);
+}
+
+/* ---------- render kuota (dipakai welcome) ---------- */
 function quotaItemHtml(q, full){
   var crit = quotaCritical(q);
   var html = '<div class="ss-qitem' + (crit.length ? " critical" : "") + '"><div class="qn">' + esc(q.name) +
@@ -495,8 +522,17 @@ function quotaItemHtml(q, full){
   var meta = [];
   if (q.group_name && q.group_name !== q.name) meta.push(esc(q.group_name));
   var exp = fmtDate(q.expired_at);
-  if (exp) meta.push("Berlaku s/d " + exp);
-  if (q.family_code) meta.push("Family: " + esc(q.family_code));
+  if (exp) {
+    var dl = daysLeft(q.expired_at);
+    var suffix = "";
+    if (dl != null) {
+      if (dl < 0) suffix = " &middot; sudah berakhir";
+      else if (dl === 0) suffix = " &middot; berakhir hari ini";
+      else suffix = " &middot; " + dl + " hari lagi";
+    }
+    meta.push("Berlaku s/d " + exp + suffix);
+  }
+  if (q.family_code) meta.push('Family: ' + esc(q.family_code) + ' <button class="ss-copybtn" type="button" data-copy-family="' + esc(q.family_code) + '" title="Salin family code">Salin</button>');
   html += '<div class="qm">' + meta.join(" &middot; ") + "</div>";
   var pct = q.unlimited ? 100 : (q.remaining_pct == null ? 0 : Math.max(0, Math.min(100, q.remaining_pct)));
   var lvl = "ok";
@@ -508,7 +544,8 @@ function quotaItemHtml(q, full){
     html += '<div class="ss-qremain"><span class="ss-qbadge ok">Tanpa batas</span></div>';
   } else {
     html += '<div class="ss-qremain"><span class="ss-qbadge ' + lvl + '">Sisa ' + fmtBytes(q.remaining_bytes) + "</span>" +
-      '<span class="ss-qof">dari ' + fmtBytes(q.total_bytes) + (q.remaining_pct != null ? " (" + q.remaining_pct + "%)" : "") + "</span></div>";
+      '<span class="ss-qof">dari ' + fmtBytes(q.total_bytes) + (q.remaining_pct != null ? " (" + q.remaining_pct + "%)" : "") + "</span>" +
+      '<span class="ss-qof">Terpakai ' + fmtBytes(Math.max(0, (q.total_bytes || 0) - (q.remaining_bytes || 0))) + "</span></div>";
   }
   html += '<div class="ss-bar"><i' + (lvl === "ok" ? "" : ' class="' + lvl + '"') + ' style="width:' + pct + '%"></i></div>';
   if (full && q.family_code) {
@@ -522,7 +559,23 @@ function renderQuotaList(el, quotas, full){
     el.innerHTML = '<p class="ss-note">Tidak ada paket kuota aktif.</p>';
     return;
   }
-  el.innerHTML = quotas.map(function(q){ return quotaItemHtml(q, full); }).join("");
+  /* Urutan: yang paling cepat berakhir dulu, lalu sisa persen terkecil;
+     paket unlimited selalu paling bawah. */
+  var sorted = quotas.slice().sort(function(a, b){
+    if (!!a.unlimited !== !!b.unlimited) return a.unlimited ? 1 : -1;
+    var ea = toSec(a.expired_at), eb = toSec(b.expired_at);
+    if (ea == null && eb != null) return 1;
+    if (ea != null && eb == null) return -1;
+    if (ea != null && eb != null && ea !== eb) return ea - eb;
+    var pa = a.remaining_pct == null ? 101 : a.remaining_pct;
+    var pb = b.remaining_pct == null ? 101 : b.remaining_pct;
+    return pa - pb;
+  });
+  el.innerHTML = sorted.map(function(q){ return quotaItemHtml(q, full); }).join("");
+  var cps = el.querySelectorAll("[data-copy-family]");
+  for (var c = 0; c < cps.length; c++) {
+    cps[c].addEventListener("click", function(){ copyText(this.getAttribute("data-copy-family")); });
+  }
   if (full) {
     var btns = el.querySelectorAll("[data-buy-family]");
     for (var i = 0; i < btns.length; i++) {
@@ -550,6 +603,14 @@ function renderWelcome(w){
   renderQuotaList($("ss-w-quotas"), w.quotas || [], true);
   renderAttention(w);
   renderSwitcher();
+  var totRem = 0, anyUnlim = false;
+  (w.quotas || []).forEach(function(q){
+    if (q.unlimited) anyUnlim = true;
+    else totRem += Number(q.remaining_bytes) || 0;
+  });
+  $("ss-w-totalquota").textContent = fmtBytes(totRem) + (anyUnlim ? " + Unlimited" : "");
+  loadPendingBanner();
+  if (!state.bookmarksLoaded) loadBookmarks();
 }
 function renderSwitcher(){
   var wrap = $("ss-switcher");
@@ -777,6 +838,20 @@ function saveBookmarkFromBuy(){
   });
 }
 
+/* ---------- banner pending di welcome ---------- */
+function loadPendingBanner(){
+  var b = $("ss-pending-banner");
+  api("/api/luci/pending").then(function(j){
+    var n = (j && j.ok && j.pending) ? j.pending.length : 0;
+    if (n > 0) {
+      b.textContent = "\u23F3 Ada " + n + " pembayaran QRIS menunggu. Klik untuk melihat.";
+      b.style.display = "block";
+    } else {
+      b.style.display = "none";
+    }
+  }).catch(function(){ b.style.display = "none"; });
+}
+
 /* ---------- pending (transaksi belum dibayar) ---------- */
 function loadPending(){
   $("ss-p-spin").style.display = "inline";
@@ -874,6 +949,25 @@ function loadBookmarks(){
   });
 }
 function renderBookmarks(){
+  var qcard = $("ss-quickbm-card"), qlist = $("ss-quickbm-list");
+  if (qcard && qlist) {
+    if (!state.bookmarks.length) {
+      qcard.style.display = "none";
+    } else {
+      qcard.style.display = "";
+      qlist.innerHTML = state.bookmarks.map(function(b, i){
+        return '<button class="ss-btn small" type="button" data-qb="' + i + '">' + esc(bookmarkTitle(b)) + " &middot; " + fmtRp(bookmarkPrice(b)) + "</button>";
+      }).join("");
+      var qbs = qlist.querySelectorAll("[data-qb]");
+      for (var qi = 0; qi < qbs.length; qi++) {
+        qbs[qi].addEventListener("click", function(){
+          var idx = Number(this.getAttribute("data-qb"));
+          showTab("bookmark");
+          openBmConfirm(idx);
+        });
+      }
+    }
+  }
   var el = $("ss-bookmark-list");
   if (!state.bookmarks.length) {
     el.innerHTML = '<p class="ss-note">Belum ada bookmark. Simpan dari layar konfirmasi di tab Beli lewat tombol "Simpan sebagai Bookmark". Maksimal 50 bookmark per nomor.</p>';
@@ -1139,11 +1233,19 @@ function init(){
   $("ss-btn-pending-refresh").addEventListener("click", function(){ state.pendingLoaded = false; loadPending(); });
   $("ss-btn-saveset").addEventListener("click", saveSettings);
   $("ss-btn-check").addEventListener("click", checkUpdate);
+  $("ss-pending-banner").addEventListener("click", function(){ showTab("pending"); });
   $("ss-btn-update").addEventListener("click", startUpdate);
   loadVersion();
 
   getLocal(URL_CONFIG).then(function(j){
     if (!j.ok) { showAlert("err", "Gagal membaca pengaturan lokal dari controller LuCI."); return; }
+    if (j.theme_g1 && j.theme_g2) {
+      var wrapEl = document.querySelector(".ss-wrap");
+      if (wrapEl) {
+        wrapEl.style.setProperty("--ss-grad", "linear-gradient(90deg," + j.theme_g1 + "," + j.theme_g2 + ")");
+        wrapEl.style.setProperty("--ss-grad135", "linear-gradient(135deg," + j.theme_g1 + "," + j.theme_g2 + ")");
+      }
+    }
     cfg.api_url = j.api_url || "";
     cfg.secret = j.secret || "";
     cfg.has_secret = !!j.has_secret;
