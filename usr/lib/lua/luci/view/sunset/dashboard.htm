@@ -108,7 +108,7 @@
   <div class="ss-tabs" id="ss-tabs">
     <button class="ss-tab active" type="button" data-stab="welcome">Welcome</button>
     <button class="ss-tab" type="button" data-stab="beli">Beli</button>
-    <button class="ss-tab" type="button" data-stab="pending">Pending</button>
+    <button class="ss-tab" type="button" data-stab="pending">Pending<span class="ss-tab-badge" id="ss-pending-badge" style="display:none"></span></button>
     <button class="ss-tab" type="button" data-stab="notifikasi">Notifikasi<span class="ss-tab-badge" id="ss-notif-badge" style="display:none"></span></button>
     <button class="ss-tab" type="button" data-stab="bookmark">Bookmark</button>
     <button class="ss-tab" type="button" data-stab="pengaturan">Pengaturan</button>
@@ -177,6 +177,12 @@
         </div>
       </aside>
      </div>
+      <div class="ss-card" id="ss-history-card" style="display:none;margin-top:14px">
+        <h2>Riwayat Pembelian via LuCI</h2>
+        <div id="ss-history-list" class="ss-ngrid"></div>
+        <div class="ss-btnrow"><button class="ss-btn small" id="ss-btn-history-clear" type="button">Hapus Riwayat</button></div>
+        <p class="ss-note" style="margin-top:8px">Tersimpan lokal di browser ini (maks. 50 entri), bukan di server. Riwayat bot Telegram terpisah.</p>
+      </div>
     </div>
   </div>
 
@@ -191,6 +197,7 @@
       </div>
       <p class="ss-note" style="margin-top:10px">Family code bisa dilihat di Welcome (di tiap paket aktif) atau di aplikasi MyXL.</p>
       <div id="ss-family-info" style="margin-top:12px"></div>
+      <div id="ss-opt-search-row" style="display:none;margin-top:10px"><input class="ss-input" id="ss-opt-search" type="text" placeholder="Cari paket di family ini&hellip;" autocomplete="off"></div>
       <div id="ss-options" style="margin-top:8px"></div>
       <span class="ss-spin" id="ss-b-spin">Memuat paket&hellip;</span>
     </div>
@@ -246,7 +253,7 @@
         <button class="ss-btn" id="ss-btn-notif-refresh" type="button">&#8635; Refresh</button>
         <span class="ss-spin" id="ss-n-spin">Memproses&hellip;</span>
       </div>
-      <p class="ss-note" style="margin-top:10px">Klik notifikasi yang belum dibaca untuk menandainya sudah dibaca.</p>
+      <p class="ss-note" style="margin-top:10px">Hanya menampilkan yang belum dibaca. Klik notifikasi untuk menandainya sudah dibaca.</p>
       <div id="ss-notif-list" class="ss-ngrid" style="margin-top:10px"><p class="ss-note">Memuat&hellip;</p></div>
     </div>
   </div>
@@ -374,7 +381,8 @@ var state = {
   family: null, options: [],
   buyCtx: null,   /* { opt, quote } */
   bmIndex: null,  /* bookmark index for confirm/edit panels */
-  currentTab: "welcome"
+  currentTab: "welcome",
+  optQuery: ""
 };
 
 function $(id){ return document.getElementById(id); }
@@ -641,6 +649,7 @@ function renderWelcome(w){
   });
   $("ss-w-totalquota").textContent = fmtBytes(totRem) + (anyUnlim ? " + Unlimited" : "");
   loadPendingBanner();
+  renderHistory();
   if (!state.notifLoaded) prefetchNotifications();
 }
 function renderSwitcher(){
@@ -757,26 +766,43 @@ function searchFamily(){
     $("ss-btn-family").disabled = false;
     if (!j.ok) {
       $("ss-family-info").innerHTML = "";
+      $("ss-opt-search-row").style.display = "none";
       $("ss-options").innerHTML = '<p class="ss-note">' + esc(errMsg(j, "Family tidak ditemukan.")) + "</p>";
       return;
     }
     state.family = j.family; state.options = j.options || [];
     $("ss-family-info").innerHTML = '<p class="ss-note"><b>' + esc(j.family.name || j.family.code) + "</b> &middot; " + esc(j.family.code) + (j.family.plan_type ? " &middot; " + esc(j.family.plan_type) : "") + "</p>";
     if (!state.options.length) {
+      $("ss-opt-search-row").style.display = "none";
       $("ss-options").innerHTML = '<p class="ss-note">Family ini tidak punya paket yang bisa dibeli.</p>';
       return;
     }
-    $("ss-options").innerHTML = state.options.map(function(o, i){
-      return '<div class="ss-opt"><div><div class="on">' + esc(o.name || o.option_code) + '</div><div class="om">' +
-        esc(o.variant_name || "") + (o.variant_name ? " &middot; " : "") + esc(o.option_code) + '</div></div>' +
-        '<div class="op">' + (o.price != null ? fmtRp(o.price) : "Harga n/a") + "</div>" +
-        '<button class="ss-btn primary small" type="button" data-opt="' + i + '">Pilih Paket</button></div>';
-    }).join("");
-    var btns = $("ss-options").querySelectorAll("[data-opt]");
-    for (var i = 0; i < btns.length; i++) {
-      btns[i].addEventListener("click", function(){ startQuote(state.options[Number(this.getAttribute("data-opt"))]); });
-    }
+    state.optQuery = "";
+    $("ss-opt-search").value = "";
+    $("ss-opt-search-row").style.display = "";
+    renderOptions();
   });
+}
+function renderOptions(){
+  var list = state.options || [];
+  var q = (state.optQuery || "").trim().toLowerCase();
+  var rows = [];
+  list.forEach(function(o, i){
+    if (q && ((o.name || "") + " " + (o.variant_name || "") + " " + (o.option_code || "")).toLowerCase().indexOf(q) === -1) return;
+    rows.push('<div class="ss-opt"><div><div class="on">' + esc(o.name || o.option_code) + '</div><div class="om">' +
+      esc(o.variant_name || "") + (o.variant_name ? " &middot; " : "") + esc(o.option_code) + '</div></div>' +
+      '<div class="op">' + (o.price != null ? fmtRp(o.price) : "Harga n/a") + "</div>" +
+      '<button class="ss-btn primary small" type="button" data-opt="' + i + '">Pilih Paket</button></div>');
+  });
+  if (!rows.length) {
+    $("ss-options").innerHTML = '<p class="ss-note">Tidak ada paket yang cocok dengan &quot;' + esc(state.optQuery) + '&quot;.</p>';
+    return;
+  }
+  $("ss-options").innerHTML = rows.join("");
+  var btns = $("ss-options").querySelectorAll("[data-opt]");
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener("click", function(){ startQuote(state.options[Number(this.getAttribute("data-opt"))]); });
+  }
 }
 function startQuote(opt){
   if (!opt) return;
@@ -841,7 +867,11 @@ function doBuy(){
     $("ss-c-spin").style.display = "none";
     $("ss-btn-buy").disabled = false;
     showBuyResult($("ss-buy-result"), j);
-    if (j.ok) { state.welcomeLoaded = false; state.pendingLoaded = false; state.notifLoaded = false; }
+    if (j.ok) {
+      state.welcomeLoaded = false; state.pendingLoaded = false; state.notifLoaded = false;
+      recordHistory(j.item_name || (ctx.quote.package && ctx.quote.package.name) || ctx.opt.name, j.amount != null ? j.amount : (ow.filled ? ow.value : null), body.method);
+      loadPendingBanner();
+    }
   });
 }
 function saveBookmarkFromBuy(){
@@ -869,11 +899,44 @@ function saveBookmarkFromBuy(){
   });
 }
 
+function updatePendingBadge(n){
+  var b = $("ss-pending-badge");
+  b.textContent = n > 0 ? String(n) : "";
+  b.style.display = n > 0 ? "" : "none";
+}
+
+/* ---------- riwayat beli lokal (localStorage browser) ---------- */
+function loadHistory(){
+  try { return JSON.parse(localStorage.getItem("ss-history-v1") || "[]"); } catch(e){ return []; }
+}
+function recordHistory(name, price, method){
+  try {
+    var h = loadHistory();
+    h.unshift({ t: new Date().toISOString(), number: (state.welcome && state.welcome.number != null) ? String(state.welcome.number) : "", name: name || "Paket", price: (price != null ? price : null), method: method || "" });
+    if (h.length > 50) h.length = 50;
+    localStorage.setItem("ss-history-v1", JSON.stringify(h));
+  } catch(e){}
+  renderHistory();
+}
+function renderHistory(){
+  var card = $("ss-history-card"); if (!card) return;
+  var num = (state.welcome && state.welcome.number != null) ? String(state.welcome.number) : null;
+  var h = loadHistory().filter(function(e){ return num == null || String(e.number) === num; });
+  if (!h.length) { card.style.display = "none"; return; }
+  card.style.display = "";
+  $("ss-history-list").innerHTML = h.slice(0, 10).map(function(e){
+    return '<div class="ss-qitem"><div class="qn">' + esc(e.name) + '</div><div class="qm">' +
+      esc(fmtIsoTime(e.t)) + (e.method ? " &middot; " + esc(methodLabel(e.method)) : "") +
+      (e.price != null ? " &middot; <b>" + fmtRp(e.price) + "</b>" : "") + "</div></div>";
+  }).join("");
+}
+
 /* ---------- banner pending di welcome ---------- */
 function loadPendingBanner(){
   var b = $("ss-pending-banner");
   api("/api/luci/pending").then(function(j){
     var n = (j && j.ok && j.pending) ? j.pending.length : 0;
+    updatePendingBadge(n);
     if (n > 0) {
       b.textContent = "\u23F3 Ada " + n + " pembayaran QRIS menunggu. Klik untuk melihat.";
       b.style.display = "block";
@@ -932,7 +995,12 @@ function renderNotifications(){
     el.innerHTML = '<p class="ss-note">Tidak ada notifikasi.</p>';
     return;
   }
-  el.innerHTML = list.map(function(n){
+  var unread = list.filter(function(n){ return !n.is_read; });
+  if (!unread.length) {
+    el.innerHTML = '<p class="ss-note">Semua notifikasi sudah dibaca.</p>';
+    return;
+  }
+  el.innerHTML = unread.map(function(n){
     var head = '<div class="qn">' + esc(n.brief_message || "(tanpa judul)") +
       (n.is_read ? "" : ' <span class="ss-qbadge crit" style="font-size:11px;padding:1px 9px">Baru</span>') + "</div>";
     var time = '<div class="qm">' + esc(fmtIsoTime(n.timestamp)) + "</div>";
@@ -994,6 +1062,7 @@ function isQrisPending(p){
   return s.indexOf("qris") >= 0;
 }
 function renderPending(){
+  updatePendingBadge((state.pendingList || []).length);
   var el = $("ss-pending-list");
   $("ss-pending-qr").className = "ss-result"; $("ss-pending-qr").innerHTML = "";
   if (!state.pendingList.length) {
@@ -1125,7 +1194,12 @@ function doBmBuy(){
     $("ss-bmc-spin").style.display = "none";
     $("ss-btn-bmc-buy").disabled = false;
     showBuyResult($("ss-bmc-result"), j);
-    if (j.ok) { state.welcomeLoaded = false; state.pendingLoaded = false; state.notifLoaded = false; }
+    if (j.ok) {
+      state.welcomeLoaded = false; state.pendingLoaded = false; state.notifLoaded = false;
+      var b = state.bookmarks[i];
+      recordHistory(j.item_name || (b ? bookmarkTitle(b) : "Paket"), j.amount != null ? j.amount : (ow.filled ? ow.value : (b ? bookmarkPrice(b) : null)), method);
+      loadPendingBanner();
+    }
   });
 }
 function openBmEdit(i){
@@ -1333,6 +1407,12 @@ function init(){
   $("ss-btn-check").addEventListener("click", checkUpdate);
   $("ss-btn-notif-refresh").addEventListener("click", function(){ state.notifLoaded = false; loadNotifications(); });
   $("ss-btn-notif-readall").addEventListener("click", notifReadAll);
+  $("ss-opt-search").addEventListener("input", function(){ state.optQuery = this.value; renderOptions(); });
+  $("ss-btn-history-clear").addEventListener("click", function(){
+    try { localStorage.removeItem("ss-history-v1"); } catch(e){}
+    renderHistory();
+    toast("Riwayat lokal dihapus.");
+  });
   $("ss-pending-banner").addEventListener("click", function(){ showTab("pending"); });
   $("ss-btn-update").addEventListener("click", startUpdate);
   loadVersion();
