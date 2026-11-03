@@ -27,6 +27,11 @@
 .ss-btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
 .ss-input,select.ss-input{width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--ss-border);border-radius:10px;color:var(--ss-text);padding:11px 13px;font-size:14px}
 .ss-input:focus{outline:none;border-color:#0B486B}
+/* Dropdown dikunci tampil terang: di beberapa browser/tema, select
+   dirender gelap mengikuti skema OS sehingga font-nya tak terbaca di
+   kartu putih. appearance:none + panah SVG sendiri = konsisten. */
+.ss-wrap select.ss-input{-webkit-appearance:none;appearance:none;background-color:#fff !important;color:var(--ss-text) !important;color-scheme:light;background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235c6a7a' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+.ss-wrap select.ss-input option{background-color:#fff;color:#1b2330}
 .ss-label{display:block;font-size:12px;font-weight:600;color:var(--ss-muted);margin:12px 0 5px;text-transform:uppercase;letter-spacing:.8px}
 .ss-label:first-child{margin-top:0}
 .ss-note{font-size:13px;color:var(--ss-muted);line-height:1.55}
