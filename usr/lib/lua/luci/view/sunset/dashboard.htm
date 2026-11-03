@@ -50,6 +50,8 @@
 .ss-qgrid .ss-qitem{margin-bottom:0}
 .ss-qgrid>.ss-note{grid-column:1/-1}
 @media (max-width:640px){.ss-qgrid{grid-template-columns:1fr}}
+.ss-tab-badge{display:inline-block;background:var(--ss-red);color:#fff;border-radius:999px;padding:0 7px;font-size:11px;font-weight:800;margin-left:5px;vertical-align:1px}
+.ss-qitem.unread{border-color:#e07f00;border-left:5px solid #e07f00;background:#fffaf4}
 .ss-copybtn{appearance:none;border:1px solid var(--ss-border);background:#fff;color:var(--ss-muted);border-radius:6px;padding:0 7px;font-size:11px;font-weight:600;cursor:pointer;vertical-align:1px;line-height:1.8}
 .ss-copybtn:hover{color:var(--ss-text)}
 .ss-qremain{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
@@ -98,6 +100,7 @@
     <button class="ss-tab active" type="button" data-tab="welcome">Welcome</button>
     <button class="ss-tab" type="button" data-tab="beli">Beli</button>
     <button class="ss-tab" type="button" data-tab="pending">Pending</button>
+    <button class="ss-tab" type="button" data-tab="notifikasi">Notifikasi<span class="ss-tab-badge" id="ss-notif-badge" style="display:none"></span></button>
     <button class="ss-tab" type="button" data-tab="bookmark">Bookmark</button>
     <button class="ss-tab" type="button" data-tab="pengaturan">Pengaturan</button>
   </div>
@@ -226,6 +229,20 @@
     </div>
   </div>
 
+  <!-- ================= TAB NOTIFIKASI ================= -->
+  <div id="tab-notifikasi" style="display:none">
+    <div class="ss-card">
+      <h2>Notifikasi XL</h2>
+      <p class="ss-note" id="ss-notif-summary">Kotak masuk notifikasi dari XL untuk nomor aktif (bonus kuota, info paket, pengingat).</p>
+      <div id="ss-notif-list" style="margin-top:10px"><p class="ss-note">Memuat&hellip;</p></div>
+      <div class="ss-btnrow">
+        <button class="ss-btn primary" id="ss-btn-notif-readall" type="button">Tandai Semua Dibaca</button>
+        <button class="ss-btn" id="ss-btn-notif-refresh" type="button">&#8635; Refresh</button>
+        <span class="ss-spin" id="ss-n-spin">Memproses&hellip;</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= TAB BOOKMARK ================= -->
   <div id="tab-bookmark" style="display:none">
     <div class="ss-card">
@@ -342,7 +359,7 @@ function methodLabel(m){
 var cfg = { api_url: "", secret: "", has_secret: false };
 var state = {
   accounts: [], activeNumber: null,
-  welcomeLoaded: false, bookmarksLoaded: false, pendingLoaded: false,
+  welcomeLoaded: false, bookmarksLoaded: false, pendingLoaded: false, notifLoaded: false, notifications: [],
   welcome: null, bookmarks: [], pendingList: [],
   latestTag: null, updateTimer: null,
   pendingNumber: null,
@@ -429,7 +446,7 @@ function postLocal(url, data){
 /* ---------- tab ---------- */
 function showTab(name){
   state.currentTab = name;
-  ["welcome","beli","pending","bookmark","pengaturan"].forEach(function(t){
+  ["welcome","beli","pending","notifikasi","bookmark","pengaturan"].forEach(function(t){
     $("tab-" + t).style.display = (t === name) ? "" : "none";
   });
   var tabs = $("ss-tabs").children;
@@ -437,6 +454,7 @@ function showTab(name){
     tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
   }
   if (name === "pending" && !state.pendingLoaded && cfg.has_secret) loadPending();
+  if (name === "notifikasi" && !state.notifLoaded && cfg.has_secret) loadNotifications();
   if (name === "bookmark" && !state.bookmarksLoaded && cfg.has_secret) loadBookmarks();
 }
 
@@ -616,6 +634,7 @@ function renderWelcome(w){
   $("ss-w-totalquota").textContent = fmtBytes(totRem) + (anyUnlim ? " + Unlimited" : "");
   loadPendingBanner();
   if (!state.bookmarksLoaded) loadBookmarks();
+  if (!state.notifLoaded) prefetchNotifications();
 }
 function renderSwitcher(){
   var wrap = $("ss-switcher");
@@ -693,7 +712,7 @@ function verifyOtp(){
     $("ss-btn-verify").disabled = false;
     if (!j.ok) { showAlert("err", errMsg(j, "Verifikasi OTP gagal.")); return; }
     toast("Login berhasil: " + (j.number || state.pendingNumber));
-    state.bookmarksLoaded = false; state.pendingLoaded = false;
+    state.bookmarksLoaded = false; state.pendingLoaded = false; state.notifLoaded = false;
     refreshAll();
   });
 }
@@ -815,7 +834,7 @@ function doBuy(){
     $("ss-c-spin").style.display = "none";
     $("ss-btn-buy").disabled = false;
     showBuyResult($("ss-buy-result"), j);
-    if (j.ok) { state.welcomeLoaded = false; state.pendingLoaded = false; }
+    if (j.ok) { state.welcomeLoaded = false; state.pendingLoaded = false; state.notifLoaded = false; }
   });
 }
 function saveBookmarkFromBuy(){
@@ -855,6 +874,92 @@ function loadPendingBanner(){
       b.style.display = "none";
     }
   }).catch(function(){ b.style.display = "none"; });
+}
+
+/* ---------- notifikasi XL ---------- */
+function fmtIsoTime(ts){
+  if (!ts) return "";
+  var d = new Date(ts);
+  if (isNaN(d.getTime())) return String(ts);
+  return d.toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+function unreadCount(){
+  return (state.notifications || []).filter(function(n){ return !n.is_read; }).length;
+}
+function updateNotifBadge(){
+  var b = $("ss-notif-badge");
+  var n = unreadCount();
+  b.textContent = n > 0 ? String(n) : "";
+  b.style.display = n > 0 ? "" : "none";
+}
+function applyNotifications(j){
+  state.notifications = j.notifications || [];
+  state.notifLoaded = true;
+  updateNotifBadge();
+  renderNotifications();
+}
+function prefetchNotifications(){
+  api("/api/luci/notifications").then(function(j){
+    if (j.ok) applyNotifications(j);
+  }).catch(function(){});
+}
+function loadNotifications(){
+  $("ss-n-spin").style.display = "inline";
+  api("/api/luci/notifications").then(function(j){
+    $("ss-n-spin").style.display = "none";
+    if (!j.ok) {
+      $("ss-notif-list").innerHTML = '<p class="ss-note">' + esc(errMsg(j, "Gagal memuat notifikasi.")) + "</p>";
+      return;
+    }
+    applyNotifications(j);
+  });
+}
+function renderNotifications(){
+  var list = state.notifications || [];
+  var un = unreadCount();
+  $("ss-notif-summary").textContent = "Total " + list.length + " notifikasi · " + un + " belum dibaca. Klik notifikasi yang belum dibaca untuk menandainya sudah dibaca.";
+  var el = $("ss-notif-list");
+  if (!list.length) {
+    el.innerHTML = '<p class="ss-note">Tidak ada notifikasi.</p>';
+    return;
+  }
+  el.innerHTML = list.map(function(n){
+    var head = '<div class="qn">' + esc(n.brief_message || "(tanpa judul)") +
+      (n.is_read ? "" : ' <span class="ss-qbadge crit" style="font-size:11px;padding:1px 9px">Baru</span>') + "</div>";
+    var time = '<div class="qm">' + esc(fmtIsoTime(n.timestamp)) + "</div>";
+    var body = n.full_message ? '<div style="font-size:13.5px;margin-top:5px;line-height:1.55">' + esc(n.full_message) + "</div>" : "";
+    if (n.is_read) return '<div class="ss-qitem">' + head + time + body + "</div>";
+    return '<div class="ss-qitem unread" data-notif-id="' + esc(n.notification_id) + '" style="cursor:pointer" title="Klik untuk tandai sudah dibaca">' + head + time + body +
+      '<div class="qm" style="margin-top:4px">Klik untuk tandai sudah dibaca</div></div>';
+  }).join("");
+  var items = el.querySelectorAll("[data-notif-id]");
+  for (var i = 0; i < items.length; i++) {
+    items[i].addEventListener("click", function(){ markNotifRead(this.getAttribute("data-notif-id")); });
+  }
+}
+function markNotifRead(id){
+  if (!id) return;
+  $("ss-n-spin").style.display = "inline";
+  api("/api/luci/notifications/read", "POST", { notification_id: id }).then(function(j){
+    $("ss-n-spin").style.display = "none";
+    if (!j.ok) { toast(errMsg(j, "Gagal menandai dibaca.")); return; }
+    (state.notifications || []).forEach(function(n){ if (n.notification_id === id) n.is_read = true; });
+    updateNotifBadge();
+    renderNotifications();
+  });
+}
+function notifReadAll(){
+  if (unreadCount() === 0) { toast("Tidak ada notifikasi yang belum dibaca."); return; }
+  $("ss-n-spin").style.display = "inline";
+  $("ss-btn-notif-readall").disabled = true;
+  api("/api/luci/notifications/read", "POST", { all: true }).then(function(j){
+    $("ss-n-spin").style.display = "none";
+    $("ss-btn-notif-readall").disabled = false;
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal menandai semua dibaca.")); return; }
+    toast(j.marked + " notifikasi ditandai dibaca." + (j.failed ? " " + j.failed + " gagal." : ""));
+    state.notifLoaded = false;
+    loadNotifications();
+  });
 }
 
 /* ---------- pending (transaksi belum dibayar) ---------- */
@@ -1032,7 +1137,7 @@ function doBmBuy(){
     $("ss-bmc-spin").style.display = "none";
     $("ss-btn-bmc-buy").disabled = false;
     showBuyResult($("ss-bmc-result"), j);
-    if (j.ok) { state.welcomeLoaded = false; state.pendingLoaded = false; }
+    if (j.ok) { state.welcomeLoaded = false; state.pendingLoaded = false; state.notifLoaded = false; }
   });
 }
 function openBmEdit(i){
@@ -1221,7 +1326,7 @@ function init(){
     api("/api/luci/accounts/active", "POST", { number: num }).then(function(j){
       if (!j.ok) { showAlert("err", errMsg(j, "Gagal mengganti nomor aktif.")); return; }
       state.activeNumber = j.active_number;
-      state.bookmarksLoaded = false; state.pendingLoaded = false;
+      state.bookmarksLoaded = false; state.pendingLoaded = false; state.notifLoaded = false;
       refreshAll();
     });
   });
@@ -1235,9 +1340,11 @@ function init(){
   $("ss-btn-bmc-cancel").addEventListener("click", function(){ $("ss-bm-confirm").style.display = "none"; });
   $("ss-btn-bme-save").addEventListener("click", saveBmEdit);
   $("ss-btn-bme-cancel").addEventListener("click", function(){ $("ss-bm-edit").style.display = "none"; });
-  $("ss-btn-pending-refresh").addEventListener("click", function(){ state.pendingLoaded = false; loadPending(); });
+  $("ss-btn-pending-refresh").addEventListener("click", function(){ state.pendingLoaded = false; state.notifLoaded = false; loadPending(); });
   $("ss-btn-saveset").addEventListener("click", saveSettings);
   $("ss-btn-check").addEventListener("click", checkUpdate);
+  $("ss-btn-notif-refresh").addEventListener("click", function(){ state.notifLoaded = false; loadNotifications(); });
+  $("ss-btn-notif-readall").addEventListener("click", notifReadAll);
   $("ss-pending-banner").addEventListener("click", function(){ showTab("pending"); });
   $("ss-btn-update").addEventListener("click", startUpdate);
   loadVersion();
