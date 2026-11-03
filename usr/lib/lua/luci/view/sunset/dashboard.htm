@@ -8,7 +8,7 @@
 .ss-pill{display:inline-flex;align-items:center;gap:8px;background:#fff !important;color:var(--ss-text) !important;border:1px solid var(--ss-border);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;white-space:nowrap;flex:0 0 auto}
 .ss-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .ss-tab{appearance:none;border:1px solid var(--ss-border);background:var(--ss-card);color:var(--ss-text);border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
-.ss-tab.active{background:var(--ss-grad135);border-color:transparent;color:#fff}
+.ss-tab.active{background:var(--ss-grad135);border-color:rgba(27,35,48,.30);color:#fff;box-shadow:0 1px 5px rgba(27,35,48,.25)}
 .ss-card{background:var(--ss-card);border:1px solid var(--ss-border);border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.05);margin-bottom:14px}
 .ss-card h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ss-muted)}
 .ss-card h3{margin:0 0 8px;font-size:16px}
@@ -50,6 +50,10 @@
 .ss-qgrid .ss-qitem{margin-bottom:0}
 .ss-qgrid>.ss-note{grid-column:1/-1}
 @media (max-width:640px){.ss-qgrid{grid-template-columns:1fr}}
+.ss-ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ss-ngrid .ss-qitem{margin-bottom:0}
+.ss-ngrid>.ss-note{grid-column:1/-1}
+@media (max-width:640px){.ss-ngrid{grid-template-columns:1fr}}
 .ss-notif-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .ss-stat{flex:1;min-width:130px;border:1px solid var(--ss-border);border-radius:12px;padding:10px 14px;background:#fbfcfe}
 .ss-stat .sv{font-size:24px;font-weight:800;line-height:1.1}
@@ -243,7 +247,7 @@
         <span class="ss-spin" id="ss-n-spin">Memproses&hellip;</span>
       </div>
       <p class="ss-note" style="margin-top:10px">Klik notifikasi yang belum dibaca untuk menandainya sudah dibaca.</p>
-      <div id="ss-notif-list" class="ss-qgrid" style="margin-top:10px"><p class="ss-note">Memuat&hellip;</p></div>
+      <div id="ss-notif-list" class="ss-ngrid" style="margin-top:10px"><p class="ss-note">Memuat&hellip;</p></div>
     </div>
   </div>
 
