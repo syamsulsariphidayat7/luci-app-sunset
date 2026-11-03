@@ -2,6 +2,9 @@
 # ==========================================================================
 #  luci-app-sunset - uninstaller (OpenWrt, ash)
 #  Menghapus file aplikasi (controller + view) dan membersihkan cache.
+#  Stempel VERSION terpasang ada DI DALAM folder view
+#  (/usr/lib/lua/luci/view/sunset/VERSION), jadi ikut terhapus oleh
+#  `rm -rf` folder view di bawah — tidak perlu penanganan khusus.
 #  Config /etc/config/sunset (berisi secret) DIPERTAHANKAN, kecuali
 #  dijalankan dengan argumen:  sh uninstall.sh purge
 # ==========================================================================

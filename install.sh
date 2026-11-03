@@ -20,8 +20,9 @@ DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 CTL="usr/lib/lua/luci/controller/sunset.lua"
 VIEWDIR="usr/lib/lua/luci/view/sunset"
 CFG="etc/config/sunset"
+VERFILE="VERSION"
 
-if [ ! -f "$DIR/$CTL" ] || [ ! -f "$DIR/$VIEWDIR/dashboard.htm" ] || [ ! -f "$DIR/$CFG" ]; then
+if [ ! -f "$DIR/$CTL" ] || [ ! -f "$DIR/$VIEWDIR/dashboard.htm" ] || [ ! -f "$DIR/$CFG" ] || [ ! -f "$DIR/$VERFILE" ]; then
   echo "[sunset] ERROR: file aplikasi tidak lengkap di $DIR" >&2
   echo "[sunset] Jalankan script dari dalam folder luci-app-sunset." >&2
   exit 1
@@ -33,12 +34,13 @@ mkdir -p "/$VIEWDIR"
 mkdir -p /etc/config
 cp -f "$DIR/$CTL" "/$CTL"
 cp -f "$DIR/$VIEWDIR/dashboard.htm" "/$VIEWDIR/dashboard.htm"
+cp -f "$DIR/$VERFILE" "/$VIEWDIR/VERSION"
 if [ -f /etc/config/sunset ]; then
   echo "[sunset] Config yang sudah ada dipertahankan (secret tidak ditimpa)"
 else
   cp -f "$DIR/$CFG" /etc/config/sunset
 fi
-chmod 644 "/$CTL" "/$VIEWDIR/dashboard.htm" /etc/config/sunset
+chmod 644 "/$CTL" "/$VIEWDIR/dashboard.htm" "/$VIEWDIR/VERSION" /etc/config/sunset
 
 echo "[sunset] Membersihkan cache LuCI + restart uhttpd..."
 rm -f /tmp/luci-indexcache /tmp/luci-indexcache.* 2>/dev/null || true
@@ -49,6 +51,7 @@ rm -rf /tmp/luci-* 2>/dev/null || true
 echo "[sunset] Verifikasi:"
 grep -q "luci.controller.sunset" "/$CTL" && echo "[sunset] controller OK"
 [ -f "/$VIEWDIR/dashboard.htm" ] && echo "[sunset] view OK"
+[ -f "/$VIEWDIR/VERSION" ] && echo "[sunset] versi OK ($(cat "/$VIEWDIR/VERSION"))"
 [ -f /etc/config/sunset ] && echo "[sunset] config OK"
 echo ""
 echo "[sunset] SELESAI. Langkah berikutnya:"

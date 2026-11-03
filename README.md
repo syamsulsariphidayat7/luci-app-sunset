@@ -3,11 +3,15 @@
 Panel **LuCI** untuk manajemen akun **MyXL (XL Axiata)** — versi tampilan
 web dari bot Telegram `me-web-sunset`. Menu: **LuCI → Services → Sunset**.
 
-Tab: **Welcome** (akun aktif, saldo, tier/poin, ringkasan kuota) ·
-**Kuota** (paket aktif + sisa kuota per paket) · **Beli** (family code →
-daftar paket → konfirmasi → Pulsa/QRIS/decoy) · **Bookmark** (template
+Tab: **Welcome** (akun aktif, saldo, tier/poin, ringkasan kuota,
+peringatan "Perlu Perhatian" untuk kuota/saldo kritis) ·
+**Kuota** (paket aktif + sisa kuota per paket, paket kritis berlabel) ·
+**Beli** (family code → daftar paket → konfirmasi → Pulsa/QRIS/decoy) ·
+**Pending** (transaksi QRIS/e-wallet belum dibayar, langsung dari XL;
+untuk QRIS bisa menampilkan ulang kode QR) · **Bookmark** (template
 beli: beli cepat, ubah, duplikat, hapus, maks 50/nomor) · **Pengaturan**
-(URL backend + secret).
+(URL backend + secret, kartu Versi & Update: cek + pasang rilis
+GitHub terbaru 1-klik).
 
 ## Arsitektur
 
@@ -76,10 +80,12 @@ scp -r luci-app-sunset root@192.168.1.1:/tmp/
 ssh root@192.168.1.1 'cd /tmp/luci-app-sunset && sh install.sh'
 ```
 
-Installer menyalin controller + view, membuat semua direktori target
+Installer menyalin controller + view + stempel `VERSION` (ke folder
+view, dibaca kartu Versi & Update), membuat semua direktori target
 (`mkdir -p`), **tidak menimpa** `/etc/config/sunset` yang sudah ada
 (secret aman saat install ulang), membersihkan cache LuCI, dan
-me-restart uhttpd.
+me-restart uhttpd. Uninstall menghapus seluruh folder view, jadi
+stempel versi ikut terhapus.
 
 ## Setup pertama kali
 
@@ -105,10 +111,23 @@ sh uninstall.sh purge   # hapus aplikasi + config
 
 | Path | Isi |
 |---|---|
-| `usr/lib/lua/luci/controller/sunset.lua` | Menu + endpoint lokal `config` (GET) & `saveconfig` (POST, CSRF) |
+| `usr/lib/lua/luci/controller/sunset.lua` | Menu + endpoint lokal `config` (GET), `saveconfig` (POST, CSRF), `version` / `check` / `update` (POST, CSRF) / `updatelog` untuk Versi & Update |
 | `usr/lib/lua/luci/view/sunset/dashboard.htm` | UI satu halaman (vanilla JS) |
+| `VERSION` | Nomor versi; disalin installer ke folder view sebagai stempel versi terpasang |
 | `etc/config/sunset` | UCI: `api_url` + `secret` |
 | `install.sh` / `uninstall.sh` | Installer / uninstaller (ash) |
 | `PLAN.md` | Dokumen rancangan yang disetujui |
+
+## Riwayat versi
+
+- **0.2.0** — Peringatan kuota kritis ("Perlu Perhatian" di Welcome +
+  label "Kritis" di tab Kuota; ambang: sisa ≤10%, berakhir ≤3 hari,
+  saldo ≤7 hari); tab **Pending** (daftar transaksi belum dibayar +
+  tampilkan ulang QR untuk QRIS); kartu **Versi & Update** di
+  Pengaturan (stempel versi terpasang, cek tag GitHub terbaru,
+  update 1-klik detached dengan log live). Tab Pending membutuhkan
+  backend yang menyediakan route `/api/luci/pending`.
+- **0.1.0** — Rilis pertama: Welcome, Kuota, Beli, Bookmark,
+  Pengaturan; backend di Vercel, auth `x-luci-secret`.
 
 oleh Syamsul Sarip Hidayat · Boundless

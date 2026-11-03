@@ -40,6 +40,11 @@
 .ss-qitem{border:1px solid var(--ss-border);border-radius:12px;padding:13px 15px;margin-bottom:10px;background:#fbfcfe}
 .ss-qitem .qn{font-weight:700;font-size:14.5px}
 .ss-qitem .qm{font-size:12.5px;color:var(--ss-muted);margin-top:2px}
+.ss-qitem.critical{border-color:#e07f00;border-left:5px solid #d43a31;background:#fffaf4}
+.ss-crit{display:inline-block;background:linear-gradient(135deg,#e07f00,#d43a31);color:#fff;border-radius:999px;padding:1px 9px;font-size:11px;font-weight:700;margin-left:8px;vertical-align:2px}
+.ss-attn-item{border:1px solid #f3d3a4;border-left:5px solid #e07f00;border-radius:12px;padding:11px 14px;margin-bottom:9px;background:#fdf6e8;font-size:13.5px;line-height:1.5}
+.ss-attn-item b{font-size:14px}
+.ss-log{background:#10161f;color:#d6e2ee;border-radius:10px;padding:12px 14px;font-size:12px;font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;margin:12px 0 0}
 .ss-opt{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--ss-border);border-radius:12px;padding:13px 15px;margin-bottom:10px;background:#fbfcfe;flex-wrap:wrap}
 .ss-opt .on{font-weight:700;font-size:14.5px}
 .ss-opt .om{font-size:12.5px;color:var(--ss-muted);margin-top:2px}
@@ -71,6 +76,7 @@
     <button class="ss-tab active" type="button" data-tab="welcome">Welcome</button>
     <button class="ss-tab" type="button" data-tab="kuota">Kuota</button>
     <button class="ss-tab" type="button" data-tab="beli">Beli</button>
+    <button class="ss-tab" type="button" data-tab="pending">Pending</button>
     <button class="ss-tab" type="button" data-tab="bookmark">Bookmark</button>
     <button class="ss-tab" type="button" data-tab="pengaturan">Pengaturan</button>
   </div>
@@ -121,6 +127,10 @@
           <button class="ss-btn primary" id="ss-btn-refresh" type="button">&#8635; Refresh Saldo &amp; Kuota</button>
           <span class="ss-spin" id="ss-w-spin">Memperbarui&hellip;</span>
         </div>
+      </div>
+      <div class="ss-card" id="ss-attn-card" style="display:none">
+        <h2>&#9888;&#65038; Perlu Perhatian</h2>
+        <div id="ss-attn-list"></div>
       </div>
       <div class="ss-card">
         <h2>Ringkasan Kuota</h2>
@@ -177,6 +187,20 @@
         <span class="ss-spin" id="ss-c-spin">Memproses&hellip;</span>
       </div>
       <div class="ss-result" id="ss-buy-result"></div>
+    </div>
+  </div>
+
+  <!-- ================= TAB PENDING ================= -->
+  <div id="tab-pending" style="display:none">
+    <div class="ss-card">
+      <h2>Transaksi Pending &mdash; Belum Dibayar</h2>
+      <p class="ss-note" style="margin-bottom:12px">Daftar transaksi QRIS / e-wallet yang belum dibayar, langsung dari XL. Pending yang menumpuk bisa membuat pembelian baru ditolak XL (error 135) &mdash; selesaikan atau biarkan kedaluwarsa.</p>
+      <div id="ss-pending-list"><p class="ss-note">Memuat&hellip;</p></div>
+      <div class="ss-btnrow">
+        <button class="ss-btn" id="ss-btn-pending-refresh" type="button">&#8635; Refresh Pending</button>
+        <span class="ss-spin" id="ss-p-spin">Memuat&hellip;</span>
+      </div>
+      <div class="ss-result" id="ss-pending-qr"></div>
     </div>
   </div>
 
@@ -241,6 +265,22 @@
         <span class="ss-spin" id="ss-set-spin">Menyimpan&hellip;</span>
       </div>
     </div>
+
+    <div class="ss-card">
+      <h2>Versi &amp; Update</h2>
+      <div class="ss-rows">
+        <div class="ss-kv"><div class="k">Versi Terpasang</div><div class="v" id="ss-ver-installed">-</div></div>
+        <div class="ss-kv"><div class="k">Status</div><div class="v" id="ss-ver-status">Belum dicek</div></div>
+      </div>
+      <p class="ss-note" style="margin-top:10px">Update mengambil <b>rilis GitHub terbaru</b> (tag terakhir repo <b>luci-app-sunset</b>) dan memasangnya otomatis &mdash; pola yang sama seperti installer online satu baris. Selama update berjalan, LuCI sempat ter-restart; jangan matikan STB.</p>
+      <div class="ss-btnrow">
+        <button class="ss-btn" id="ss-btn-check" type="button">Cek Update</button>
+        <button class="ss-btn primary" id="ss-btn-update" type="button" style="display:none">Update Sekarang</button>
+        <span class="ss-spin" id="ss-ver-spin">Memeriksa&hellip;</span>
+      </div>
+      <pre class="ss-log" id="ss-ver-log" style="display:none"></pre>
+      <p class="ss-note" id="ss-ver-done" style="display:none;margin-top:10px"><b>Update selesai.</b> Hard refresh halaman ini (Ctrl+F5). Kalau halaman tidak bisa dibuka, pasang ulang lewat one-liner curl di README repo.</p>
+    </div>
   </div>
 
   <p class="ss-foot">luci-app-sunset &middot; Syamsul Sarip Hidayat &middot; Boundless</p>
@@ -253,6 +293,16 @@
 var CSRF_TOKEN = "<%=token%>";
 var URL_CONFIG = "<%=luci.dispatcher.build_url("admin", "services", "sunset", "config")%>";
 var URL_SAVE   = "<%=luci.dispatcher.build_url("admin", "services", "sunset", "saveconfig")%>";
+var URL_VERSION   = "<%=luci.dispatcher.build_url("admin", "services", "sunset", "version")%>";
+var URL_CHECK     = "<%=luci.dispatcher.build_url("admin", "services", "sunset", "check")%>";
+var URL_UPDATE    = "<%=luci.dispatcher.build_url("admin", "services", "sunset", "update")%>";
+var URL_UPDATELOG = "<%=luci.dispatcher.build_url("admin", "services", "sunset", "updatelog")%>";
+
+/* Ambang peringatan kritis (fitur "Perlu Perhatian"). */
+var QUOTA_PCT_CRITICAL = 10;   /* sisa kuota <= nilai ini (%) dianggap kritis */
+var QUOTA_DAYS_CRITICAL = 3;   /* kuota berakhir <= nilai ini (hari) dianggap kritis */
+var BALANCE_DAYS_CRITICAL = 7; /* saldo berakhir <= nilai ini (hari) dianggap kritis */
+var DAY_SEC = 86400;
 
 var METHODS = [
   { id: "balance",        label: "\uD83D\uDCB5 Pulsa" },
@@ -270,8 +320,9 @@ function methodLabel(m){
 var cfg = { api_url: "", secret: "", has_secret: false };
 var state = {
   accounts: [], activeNumber: null,
-  welcomeLoaded: false, quotaLoaded: false, bookmarksLoaded: false,
-  welcome: null, bookmarks: [],
+  welcomeLoaded: false, quotaLoaded: false, bookmarksLoaded: false, pendingLoaded: false,
+  welcome: null, bookmarks: [], pendingList: [],
+  latestTag: null, updateTimer: null,
   pendingNumber: null,
   family: null, options: [],
   buyCtx: null,   /* { opt, quote } */
@@ -356,7 +407,7 @@ function postLocal(url, data){
 /* ---------- tab ---------- */
 function showTab(name){
   state.currentTab = name;
-  ["welcome","kuota","beli","bookmark","pengaturan"].forEach(function(t){
+  ["welcome","kuota","beli","pending","bookmark","pengaturan"].forEach(function(t){
     $("tab-" + t).style.display = (t === name) ? "" : "none";
   });
   var tabs = $("ss-tabs").children;
@@ -364,12 +415,76 @@ function showTab(name){
     tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
   }
   if (name === "kuota" && !state.quotaLoaded && cfg.has_secret) loadQuota();
+  if (name === "pending" && !state.pendingLoaded && cfg.has_secret) loadPending();
   if (name === "bookmark" && !state.bookmarksLoaded && cfg.has_secret) loadBookmarks();
+}
+
+/* ---------- penilaian kritis (peringatan kuota & saldo) ---------- */
+/* expired_at dari backend = epoch DETIK (lihat lib/luci/common.ts +
+   lib/format.ts backend); toSec menormalkan bila suatu saat ms. */
+function toSec(ts){
+  if (ts == null || ts === "") return null;
+  var n = Number(ts);
+  if (isNaN(n) || n <= 0) return null;
+  if (n > 1e12) n = n / 1000;
+  return n;
+}
+function daysLeft(ts){
+  var s = toSec(ts);
+  if (s == null) return null;
+  /* Dibulatkan (bukan floor) supaya "4 hari lagi" tidak terbaca
+     3 hanya karena kurang beberapa detik dari kelipatan 24 jam. */
+  return Math.round((s - Date.now() / 1000) / DAY_SEC);
+}
+function expiryReason(ts, label){
+  var d = daysLeft(ts);
+  if (d == null) return null;
+  if (d < 0) return label + " sudah berakhir";
+  if (d === 0) return label + " berakhir hari ini";
+  return label + " berakhir dalam " + d + " hari";
+}
+/* Daftar alasan kritis satu kuota; kosong = sehat. Paket unlimited
+   (remaining_pct null) hanya dinilai dari masa berlakunya. */
+function quotaCritical(q){
+  var reasons = [];
+  if (!q.unlimited && q.remaining_pct != null && q.remaining_pct <= QUOTA_PCT_CRITICAL) {
+    reasons.push("Sisa kuota tinggal " + q.remaining_pct + "%");
+  }
+  var d = daysLeft(q.expired_at);
+  if (d != null && d <= QUOTA_DAYS_CRITICAL) {
+    var r = expiryReason(q.expired_at, "Masa berlaku");
+    if (r) reasons.push(r);
+  }
+  return reasons;
+}
+function balanceCritical(w){
+  if (!w || !w.balance) return null;
+  var d = daysLeft(w.balance.expired_at);
+  if (d == null || d > BALANCE_DAYS_CRITICAL) return null;
+  return expiryReason(w.balance.expired_at, "Saldo");
+}
+/* Seksi "Perlu Perhatian" di Welcome; disembunyikan bila sehat semua. */
+function renderAttention(w){
+  var items = [];
+  (w.quotas || []).forEach(function(q){
+    var reasons = quotaCritical(q);
+    if (reasons.length) {
+      items.push('<div class="ss-attn-item"><b>' + esc(q.name) + '</b><br>' + esc(reasons.join(" \u00B7 ")) + "</div>");
+    }
+  });
+  var bal = balanceCritical(w);
+  if (bal) {
+    items.push('<div class="ss-attn-item"><b>Saldo ' + esc(fmtRp(w.balance.remaining)) + "</b><br>" + esc(bal) + " &mdash; isi pulsa sebelum berakhir agar saldo tidak hangus.</div>");
+  }
+  $("ss-attn-list").innerHTML = items.join("");
+  $("ss-attn-card").style.display = items.length ? "" : "none";
 }
 
 /* ---------- render kuota (dipakai welcome & tab kuota) ---------- */
 function quotaItemHtml(q, full){
-  var html = '<div class="ss-qitem"><div class="qn">' + esc(q.name) + "</div>";
+  var crit = quotaCritical(q);
+  var html = '<div class="ss-qitem' + (crit.length ? " critical" : "") + '"><div class="qn">' + esc(q.name) +
+    (crit.length ? '<span class="ss-crit">Kritis</span>' : "") + "</div>";
   var meta = [];
   if (q.group_name && q.group_name !== q.name) meta.push(esc(q.group_name));
   if (q.unlimited) meta.push("Tanpa batas");
@@ -417,6 +532,7 @@ function renderWelcome(w){
   $("ss-w-balance-exp").textContent = bexp ? ("Saldo berlaku s/d " + bexp + ".") : "";
   $("ss-pill").textContent = w.number != null ? ("Aktif: " + w.number) : "Sunset";
   renderQuotaList($("ss-w-quotas"), w.quotas || [], false);
+  renderAttention(w);
   renderSwitcher();
 }
 function renderSwitcher(){
@@ -496,7 +612,7 @@ function verifyOtp(){
     $("ss-btn-verify").disabled = false;
     if (!j.ok) { showAlert("err", errMsg(j, "Verifikasi OTP gagal.")); return; }
     toast("Login berhasil: " + (j.number || state.pendingNumber));
-    state.quotaLoaded = false; state.bookmarksLoaded = false;
+    state.quotaLoaded = false; state.bookmarksLoaded = false; state.pendingLoaded = false;
     refreshAll();
   });
 }
@@ -632,7 +748,7 @@ function doBuy(){
     $("ss-c-spin").style.display = "none";
     $("ss-btn-buy").disabled = false;
     showBuyResult($("ss-buy-result"), j);
-    if (j.ok) { state.quotaLoaded = false; state.welcomeLoaded = false; }
+    if (j.ok) { state.quotaLoaded = false; state.welcomeLoaded = false; state.pendingLoaded = false; }
   });
 }
 function saveBookmarkFromBuy(){
@@ -657,6 +773,83 @@ function saveBookmarkFromBuy(){
     if (!j.ok) { showAlert("err", errMsg(j, "Gagal menyimpan bookmark.")); return; }
     state.bookmarksLoaded = false;
     toast("Bookmark tersimpan.");
+  });
+}
+
+/* ---------- pending (transaksi belum dibayar) ---------- */
+function loadPending(){
+  $("ss-p-spin").style.display = "inline";
+  api("/api/luci/pending").then(function(j){
+    $("ss-p-spin").style.display = "none";
+    if (!j.ok) {
+      $("ss-pending-list").innerHTML = '<p class="ss-note">' + esc(errMsg(j, "Gagal memuat transaksi pending.")) + "</p>";
+      return;
+    }
+    state.pendingLoaded = true;
+    state.pendingList = j.pending || [];
+    renderPending();
+  });
+}
+function pendingAmount(p){
+  var n = Number(p.raw_price);
+  if (p.raw_price != null && p.raw_price !== "" && isFinite(n)) return fmtRp(n);
+  if (p.price) return String(p.price);
+  return "-";
+}
+function isQrisPending(p){
+  var s = (String(p.payment_with || "") + " " + String(p.payment_with_label || "")).toLowerCase();
+  return s.indexOf("qris") >= 0;
+}
+function renderPending(){
+  var el = $("ss-pending-list");
+  $("ss-pending-qr").className = "ss-result"; $("ss-pending-qr").innerHTML = "";
+  if (!state.pendingList.length) {
+    el.innerHTML = '<p class="ss-note">Tidak ada transaksi pending.</p>';
+    return;
+  }
+  el.innerHTML = state.pendingList.map(function(p, i){
+    var meta = [];
+    if (p.title && p.title !== p.package_name) meta.push(esc(p.title));
+    if (p.payment_with_label || p.payment_with) meta.push(esc(p.payment_with_label || p.payment_with));
+    var tgl = p.formated_date ? String(p.formated_date) : fmtDate(p.timestamp);
+    if (tgl) meta.push(esc(tgl));
+    if (p.status) meta.push("Status: " + esc(p.status));
+    if (p.reference_id) meta.push("Ref: " + esc(p.reference_id));
+    var html = '<div class="ss-qitem"><div class="qn">' + esc(p.package_name || p.title || "Transaksi") + "</div>" +
+      '<div class="qm">' + meta.join(" &middot; ") + "</div>" +
+      '<div style="font-size:16px;font-weight:800;margin-top:4px">' + esc(pendingAmount(p)) + "</div>";
+    if (isQrisPending(p) && p.payment_id) {
+      html += '<div class="ss-btnrow"><button class="ss-btn small" type="button" data-pending-qr="' + i + '">Lihat QR</button></div>';
+    }
+    html += "</div>";
+    return html;
+  }).join("");
+  var btns = el.querySelectorAll("[data-pending-qr]");
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener("click", function(){ showPendingQr(Number(this.getAttribute("data-pending-qr"))); });
+  }
+}
+function showPendingQr(i){
+  var p = state.pendingList[i]; if (!p || !p.payment_id) return;
+  var el = $("ss-pending-qr");
+  el.className = "ss-result"; el.innerHTML = "";
+  $("ss-p-spin").style.display = "inline";
+  api("/api/luci/pending/qr", "POST", { payment_id: p.payment_id }).then(function(j){
+    $("ss-p-spin").style.display = "none";
+    /* Sub-fitur ini bisa gagal di XL (ID pending belum tentu cocok
+       dengan ID transaksi settle) — tampilkan pesan backend apa
+       adanya, jangan sampai halaman rusak. */
+    if (!j.ok || !j.qr) {
+      el.className = "ss-result err";
+      el.innerHTML = "<b>Gagal menampilkan QR.</b> " + esc(errMsg(j, "Backend tidak mengembalikan QR untuk transaksi ini."));
+      return;
+    }
+    el.className = "ss-result ok";
+    var html = "<b>" + esc(p.package_name || "Transaksi QRIS") + "</b> &middot; " + esc(pendingAmount(p)) + "<br>Scan QR ini untuk membayar:";
+    if (j.qr.data_url) html += '<img class="qr" alt="QRIS" src="' + j.qr.data_url + '">';
+    else if (j.qr.string) html += "<br>Kode QR: <code>" + esc(j.qr.string) + "</code>";
+    el.innerHTML = html;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
@@ -739,7 +932,7 @@ function doBmBuy(){
     $("ss-bmc-spin").style.display = "none";
     $("ss-btn-bmc-buy").disabled = false;
     showBuyResult($("ss-bmc-result"), j);
-    if (j.ok) { state.quotaLoaded = false; state.welcomeLoaded = false; }
+    if (j.ok) { state.quotaLoaded = false; state.welcomeLoaded = false; state.pendingLoaded = false; }
   });
 }
 function openBmEdit(i){
@@ -836,6 +1029,78 @@ function saveSettings(){
   });
 }
 
+/* ---------- versi & update (controller lokal) ---------- */
+function loadVersion(){
+  return getLocal(URL_VERSION).then(function(j){
+    if (j.ok) $("ss-ver-installed").textContent = j.installed || "?";
+    return j;
+  }).catch(function(){ return { ok: false }; });
+}
+function checkUpdate(){
+  $("ss-ver-spin").style.display = "inline";
+  $("ss-btn-check").disabled = true;
+  $("ss-btn-update").style.display = "none";
+  getLocal(URL_CHECK).then(function(j){
+    $("ss-ver-spin").style.display = "none";
+    $("ss-btn-check").disabled = false;
+    if (!j.ok) {
+      $("ss-ver-status").textContent = errMsg(j, "Gagal cek update.");
+      return;
+    }
+    $("ss-ver-installed").textContent = j.installed || "?";
+    state.latestTag = j.latest || null;
+    if (j.update_available) {
+      $("ss-ver-status").textContent = "Ada update: " + (j.latest || "");
+      $("ss-btn-update").style.display = "";
+    } else {
+      $("ss-ver-status").textContent = "Sudah versi terbaru (" + (j.latest || j.installed || "") + ")";
+    }
+  }).catch(function(){
+    $("ss-ver-spin").style.display = "none";
+    $("ss-btn-check").disabled = false;
+    $("ss-ver-status").textContent = "Gagal menghubungi controller lokal.";
+  });
+}
+function startUpdate(){
+  if (!window.confirm("Pasang rilis terbaru luci-app-sunset sekarang? LuCI akan ter-restart sebentar selama proses.")) return;
+  $("ss-btn-update").disabled = true;
+  $("ss-btn-check").disabled = true;
+  postLocal(URL_UPDATE, {}).then(function(j){
+    $("ss-btn-update").disabled = false;
+    $("ss-btn-check").disabled = false;
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal memulai update.")); return; }
+    showAlert("", "");
+    $("ss-ver-status").textContent = "Update berjalan\u2026";
+    $("ss-ver-log").style.display = "";
+    $("ss-ver-log").textContent = "";
+    $("ss-ver-done").style.display = "none";
+    pollUpdateLog();
+  });
+}
+function pollUpdateLog(){
+  if (state.updateTimer) clearInterval(state.updateTimer);
+  var fetchLog = function(){
+    getLocal(URL_UPDATELOG).then(function(j){
+      if (!j.ok) return;
+      if (j.log) {
+        var logEl = $("ss-ver-log");
+        logEl.textContent = j.log;
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      if (j.rc !== null && j.rc !== undefined) {
+        clearInterval(state.updateTimer);
+        state.updateTimer = null;
+        $("ss-ver-status").textContent = Number(j.rc) === 0 ? "Update selesai (berhasil)" : ("Update gagal (kode " + j.rc + ") \u2014 lihat log");
+        $("ss-ver-done").style.display = "";
+        $("ss-btn-update").style.display = "none";
+        loadVersion();
+      }
+    }).catch(function(){ /* uhttpd sedang restart — polling berikutnya coba lagi */ });
+  };
+  fetchLog();
+  state.updateTimer = setInterval(fetchLog, 2000);
+}
+
 /* ---------- init ---------- */
 function init(){
   fillMethodSelect($("ss-c-method"), false);
@@ -857,7 +1122,7 @@ function init(){
     api("/api/luci/accounts/active", "POST", { number: num }).then(function(j){
       if (!j.ok) { showAlert("err", errMsg(j, "Gagal mengganti nomor aktif.")); return; }
       state.activeNumber = j.active_number;
-      state.quotaLoaded = false; state.bookmarksLoaded = false;
+      state.quotaLoaded = false; state.bookmarksLoaded = false; state.pendingLoaded = false;
       refreshAll();
     });
   });
@@ -871,7 +1136,11 @@ function init(){
   $("ss-btn-bmc-cancel").addEventListener("click", function(){ $("ss-bm-confirm").style.display = "none"; });
   $("ss-btn-bme-save").addEventListener("click", saveBmEdit);
   $("ss-btn-bme-cancel").addEventListener("click", function(){ $("ss-bm-edit").style.display = "none"; });
+  $("ss-btn-pending-refresh").addEventListener("click", function(){ state.pendingLoaded = false; loadPending(); });
   $("ss-btn-saveset").addEventListener("click", saveSettings);
+  $("ss-btn-check").addEventListener("click", checkUpdate);
+  $("ss-btn-update").addEventListener("click", startUpdate);
+  loadVersion();
 
   getLocal(URL_CONFIG).then(function(j){
     if (!j.ok) { showAlert("err", "Gagal membaca pengaturan lokal dari controller LuCI."); return; }
