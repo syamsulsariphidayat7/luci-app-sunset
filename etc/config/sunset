@@ -1,0 +1,7 @@
+# luci-app-sunset — pengaturan koneksi ke backend me-web-sunset (Vercel).
+# api_url: alamat deployment backend (default bawaan di bawah).
+# secret : nilai yang sama dengan env LUCI_API_SECRET di Vercel;
+#          diisi sekali lewat LuCI -> Services -> Sunset -> tab Pengaturan.
+config sunset 'settings'
+	option api_url 'https://shoot.boundless.my.id'
+	option secret ''

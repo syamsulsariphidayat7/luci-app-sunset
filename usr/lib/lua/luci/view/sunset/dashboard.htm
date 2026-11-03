@@ -1,0 +1,899 @@
+<%+header%>
+<style>
+.ss-wrap{--ss-grad:linear-gradient(90deg,#0B486B,#F56217);--ss-grad135:linear-gradient(135deg,#0B486B,#F56217);--ss-card:#ffffff;--ss-border:#d3dae2;--ss-text:#1b2330;--ss-muted:#5c6a7a;--ss-green:#1d9d57;--ss-red:#d43a31;--ss-amber:#e07f00;--ss-bg:#eef2f6;max-width:1080px;margin:0 auto;padding:20px 16px 60px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ss-text)}
+.ss-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.ss-title{margin:0;font-size:28px;letter-spacing:2px;font-family:ui-monospace,Menlo,monospace}
+.ss-title .ss-mark{background:var(--ss-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ss-sub{margin:4px 0 0;color:var(--ss-muted);font-size:13px}
+.ss-pill{display:inline-flex;align-items:center;gap:8px;background:var(--ss-card);border:1px solid var(--ss-border);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600}
+.ss-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.ss-tab{appearance:none;border:1px solid var(--ss-border);background:var(--ss-card);color:var(--ss-text);border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
+.ss-tab.active{background:var(--ss-grad135);border-color:transparent;color:#fff}
+.ss-card{background:var(--ss-card);border:1px solid var(--ss-border);border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.05);margin-bottom:14px}
+.ss-card h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ss-muted)}
+.ss-card h3{margin:0 0 8px;font-size:16px}
+.ss-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 18px}
+.ss-kv .k{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--ss-muted);margin-bottom:3px}
+.ss-kv .v{font-size:16px;font-weight:700}
+.ss-kv .v.big{font-size:22px}
+.ss-badge{display:inline-block;background:var(--ss-grad);color:#fff;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.ss-badge.grey{background:#eef2f6;color:var(--ss-muted)}
+.ss-btn{appearance:none;border:1px solid var(--ss-border);background:#fff;color:var(--ss-text);border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.ss-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(20,24,31,.16)}
+.ss-btn:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
+.ss-btn.primary{background:var(--ss-grad135);border-color:transparent;color:#fff}
+.ss-btn.danger{background:#fff;border-color:#e5a19c;color:var(--ss-red)}
+.ss-btn.small{padding:6px 13px;font-size:12.5px}
+.ss-btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ss-input,select.ss-input{width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--ss-border);border-radius:10px;color:var(--ss-text);padding:11px 13px;font-size:14px}
+.ss-input:focus{outline:none;border-color:#0B486B}
+.ss-label{display:block;font-size:12px;font-weight:600;color:var(--ss-muted);margin:12px 0 5px;text-transform:uppercase;letter-spacing:.8px}
+.ss-label:first-child{margin-top:0}
+.ss-note{font-size:13px;color:var(--ss-muted);line-height:1.55}
+.ss-note b{color:var(--ss-text)}
+.ss-alert{display:none;border-radius:12px;padding:12px 16px;font-size:13.5px;margin-bottom:14px;line-height:1.5}
+.ss-alert.err{display:block;background:#fdf0ef;border:1px solid #f2c1bd;color:#8f241c}
+.ss-alert.warn{display:block;background:#fdf6e8;border:1px solid #f3d3a4;color:#7a4d00}
+.ss-alert.ok{display:block;background:#ecf8f1;border:1px solid #a9dfc2;color:#14532d}
+.ss-bar{height:10px;background:#e6ebf0;border-radius:999px;overflow:hidden;margin-top:8px}
+.ss-bar>i{display:block;height:100%;background:var(--ss-grad);border-radius:999px}
+.ss-qitem{border:1px solid var(--ss-border);border-radius:12px;padding:13px 15px;margin-bottom:10px;background:#fbfcfe}
+.ss-qitem .qn{font-weight:700;font-size:14.5px}
+.ss-qitem .qm{font-size:12.5px;color:var(--ss-muted);margin-top:2px}
+.ss-opt{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--ss-border);border-radius:12px;padding:13px 15px;margin-bottom:10px;background:#fbfcfe;flex-wrap:wrap}
+.ss-opt .on{font-weight:700;font-size:14.5px}
+.ss-opt .om{font-size:12.5px;color:var(--ss-muted);margin-top:2px}
+.ss-opt .op{font-size:16px;font-weight:800;white-space:nowrap}
+.ss-result{display:none;border-radius:12px;padding:14px 16px;font-size:14px;margin-top:14px;line-height:1.55}
+.ss-result.ok{display:block;background:#ecf8f1;border:1px solid #a9dfc2}
+.ss-result.err{display:block;background:#fdf0ef;border:1px solid #f2c1bd}
+.ss-result img.qr{display:block;margin:12px auto;max-width:280px;width:100%;border-radius:8px;background:#fff;padding:6px}
+.ss-result code{word-break:break-all}
+.ss-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#1b2330;color:#fff;border-radius:999px;padding:11px 22px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:99;max-width:90vw;text-align:center}
+.ss-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.ss-spin{display:none;font-size:13px;color:var(--ss-muted)}
+.ss-foot{font-size:12px;color:var(--ss-muted);text-align:center;line-height:1.7;margin-top:8px}
+@media (max-width:600px){.ss-opt .op{font-size:15px}}
+</style>
+
+<div class="ss-wrap">
+  <div class="ss-top">
+    <div>
+      <h1 class="ss-title"><span class="ss-mark">&#9646;</span> SUNSET</h1>
+      <p class="ss-sub">Manajemen akun MyXL &mdash; saldo, kuota, beli paket &amp; bookmark. Backend tetap di Vercel; halaman ini hanya tampilannya.</p>
+    </div>
+    <span class="ss-pill" id="ss-pill">Memuat&hellip;</span>
+  </div>
+
+  <div class="ss-alert" id="ss-alert"></div>
+
+  <div class="ss-tabs" id="ss-tabs">
+    <button class="ss-tab active" type="button" data-tab="welcome">Welcome</button>
+    <button class="ss-tab" type="button" data-tab="kuota">Kuota</button>
+    <button class="ss-tab" type="button" data-tab="beli">Beli</button>
+    <button class="ss-tab" type="button" data-tab="bookmark">Bookmark</button>
+    <button class="ss-tab" type="button" data-tab="pengaturan">Pengaturan</button>
+  </div>
+
+  <!-- ================= TAB WELCOME ================= -->
+  <div id="tab-welcome">
+    <div class="ss-card" id="ss-login" style="display:none">
+      <h2>Login Akun XL</h2>
+      <div id="ss-login-step1">
+        <label class="ss-label" for="ss-login-number">Nomor XL</label>
+        <input class="ss-input" id="ss-login-number" type="tel" inputmode="numeric" placeholder="08xxxxxxxxxx" autocomplete="off">
+        <div class="ss-btnrow">
+          <button class="ss-btn primary" id="ss-btn-otp" type="button">Kirim OTP</button>
+          <span class="ss-spin" id="ss-login-spin">Memproses&hellip;</span>
+        </div>
+        <p class="ss-note" style="margin-top:10px">Kode OTP 6 digit akan dikirim via SMS ke nomor tersebut.</p>
+      </div>
+      <div id="ss-login-step2" style="display:none">
+        <p class="ss-note" id="ss-otp-note"></p>
+        <label class="ss-label" for="ss-login-code">Kode OTP (6 digit)</label>
+        <input class="ss-input" id="ss-login-code" type="text" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code">
+        <div class="ss-btnrow">
+          <button class="ss-btn primary" id="ss-btn-verify" type="button">Masuk</button>
+          <button class="ss-btn" id="ss-btn-otp-back" type="button">Ganti Nomor</button>
+          <span class="ss-spin" id="ss-verify-spin">Memproses&hellip;</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="ss-welcome-main" style="display:none">
+      <div class="ss-card">
+        <h2>Akun Aktif</h2>
+        <div class="ss-rows">
+          <div class="ss-kv"><div class="k">Nomor</div><div class="v big" id="ss-w-number">-</div></div>
+          <div class="ss-kv"><div class="k">Saldo</div><div class="v big" id="ss-w-balance">-</div></div>
+          <div class="ss-kv"><div class="k">Jenis</div><div class="v" id="ss-w-type">-</div></div>
+          <div class="ss-kv"><div class="k">Tier / Poin</div><div class="v" id="ss-w-tier">-</div></div>
+        </div>
+        <p class="ss-note" id="ss-w-balance-exp" style="margin-top:10px"></p>
+        <div id="ss-switcher" style="display:none">
+          <label class="ss-label" for="ss-account-select">Ganti Nomor Aktif</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <select class="ss-input" id="ss-account-select" style="flex:1;min-width:200px"></select>
+            <button class="ss-btn" id="ss-btn-switch" type="button">Pakai Nomor Ini</button>
+          </div>
+        </div>
+        <div class="ss-btnrow">
+          <button class="ss-btn primary" id="ss-btn-refresh" type="button">&#8635; Refresh Saldo &amp; Kuota</button>
+          <span class="ss-spin" id="ss-w-spin">Memperbarui&hellip;</span>
+        </div>
+      </div>
+      <div class="ss-card">
+        <h2>Ringkasan Kuota</h2>
+        <div id="ss-w-quotas"><p class="ss-note">Memuat&hellip;</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB KUOTA ================= -->
+  <div id="tab-kuota" style="display:none">
+    <div class="ss-card">
+      <h2>Paket Aktif &amp; Sisa Kuota</h2>
+      <div id="ss-quota-list"><p class="ss-note">Memuat&hellip;</p></div>
+      <div class="ss-btnrow">
+        <button class="ss-btn" id="ss-btn-quota-refresh" type="button">&#8635; Refresh Kuota</button>
+        <span class="ss-spin" id="ss-q-spin">Memperbarui&hellip;</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB BELI ================= -->
+  <div id="tab-beli" style="display:none">
+    <div class="ss-card">
+      <h2>Beli Paket</h2>
+      <label class="ss-label" for="ss-family-input">Family Code</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input class="ss-input" id="ss-family-input" type="text" placeholder="cth. FAM123 / UUID" autocomplete="off" style="flex:1;min-width:200px">
+        <button class="ss-btn primary" id="ss-btn-family" type="button">Cari Paket</button>
+      </div>
+      <p class="ss-note" style="margin-top:10px">Family code bisa dilihat di tab Kuota (di tiap paket aktif) atau di aplikasi MyXL.</p>
+      <div id="ss-family-info" style="margin-top:12px"></div>
+      <div id="ss-options" style="margin-top:8px"></div>
+      <span class="ss-spin" id="ss-b-spin">Memuat paket&hellip;</span>
+    </div>
+
+    <div class="ss-card" id="ss-confirm" style="display:none">
+      <h2>Konfirmasi Pembelian</h2>
+      <div class="ss-rows">
+        <div class="ss-kv"><div class="k">Paket</div><div class="v" id="ss-c-name">-</div></div>
+        <div class="ss-kv"><div class="k">Harga</div><div class="v" id="ss-c-price">-</div></div>
+        <div class="ss-kv"><div class="k">Masa Berlaku</div><div class="v" id="ss-c-validity">-</div></div>
+        <div class="ss-kv"><div class="k">Saldo Saat Ini</div><div class="v" id="ss-c-balance">-</div></div>
+      </div>
+      <p class="ss-note" id="ss-c-family" style="margin-top:8px"></p>
+      <p class="ss-note" id="ss-c-warn" style="color:var(--ss-red);font-weight:600"></p>
+      <label class="ss-label" for="ss-c-method">Metode Bayar</label>
+      <select class="ss-input" id="ss-c-method"></select>
+      <label class="ss-label" for="ss-c-overwrite">Harga Overwrite (opsional)</label>
+      <input class="ss-input" id="ss-c-overwrite" type="number" min="0" step="any" placeholder="Kosongkan = harga asli">
+      <div class="ss-btnrow">
+        <button class="ss-btn primary" id="ss-btn-buy" type="button">Beli Sekarang</button>
+        <button class="ss-btn" id="ss-btn-savebm" type="button">&#11088; Simpan sebagai Bookmark</button>
+        <button class="ss-btn" id="ss-btn-cancelbuy" type="button">Batal</button>
+        <span class="ss-spin" id="ss-c-spin">Memproses&hellip;</span>
+      </div>
+      <div class="ss-result" id="ss-buy-result"></div>
+    </div>
+  </div>
+
+  <!-- ================= TAB BOOKMARK ================= -->
+  <div id="tab-bookmark" style="display:none">
+    <div class="ss-card">
+      <h2>Bookmark &mdash; Template Beli</h2>
+      <div id="ss-bookmark-list"><p class="ss-note">Memuat&hellip;</p></div>
+      <div class="ss-btnrow">
+        <button class="ss-btn" id="ss-btn-bm-refresh" type="button">&#8635; Refresh Bookmark</button>
+        <span class="ss-spin" id="ss-bm-spin">Memuat&hellip;</span>
+      </div>
+    </div>
+
+    <div class="ss-card" id="ss-bm-confirm" style="display:none">
+      <h2>Konfirmasi Beli dari Bookmark</h2>
+      <div class="ss-rows">
+        <div class="ss-kv"><div class="k">Paket</div><div class="v" id="ss-bmc-name">-</div></div>
+        <div class="ss-kv"><div class="k">Harga Template</div><div class="v" id="ss-bmc-price">-</div></div>
+      </div>
+      <label class="ss-label" for="ss-bmc-method">Metode Bayar</label>
+      <select class="ss-input" id="ss-bmc-method"></select>
+      <label class="ss-label" for="ss-bmc-overwrite">Harga Overwrite</label>
+      <input class="ss-input" id="ss-bmc-overwrite" type="number" min="0" step="any" placeholder="Kosongkan = pakai nilai template">
+      <div class="ss-btnrow">
+        <button class="ss-btn primary" id="ss-btn-bmc-buy" type="button">Beli Sekarang</button>
+        <button class="ss-btn" id="ss-btn-bmc-cancel" type="button">Batal</button>
+        <span class="ss-spin" id="ss-bmc-spin">Memproses&hellip;</span>
+      </div>
+      <div class="ss-result" id="ss-bmc-result"></div>
+    </div>
+
+    <div class="ss-card" id="ss-bm-edit" style="display:none">
+      <h2>Ubah Bookmark</h2>
+      <p class="ss-note" id="ss-bme-name"></p>
+      <label class="ss-label" for="ss-bme-label">Label</label>
+      <input class="ss-input" id="ss-bme-label" type="text" placeholder="Nama tampilan bookmark" autocomplete="off">
+      <label class="ss-label" for="ss-bme-method">Metode Bayar</label>
+      <select class="ss-input" id="ss-bme-method"></select>
+      <label class="ss-label" for="ss-bme-overwrite">Harga Overwrite</label>
+      <input class="ss-input" id="ss-bme-overwrite" type="number" min="0" step="any" placeholder="Kosongkan = harga asli paket">
+      <div class="ss-btnrow">
+        <button class="ss-btn primary" id="ss-btn-bme-save" type="button">Simpan</button>
+        <button class="ss-btn" id="ss-btn-bme-cancel" type="button">Batal</button>
+        <span class="ss-spin" id="ss-bme-spin">Menyimpan&hellip;</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB PENGATURAN ================= -->
+  <div id="tab-pengaturan" style="display:none">
+    <div class="ss-card">
+      <h2>Pengaturan Backend</h2>
+      <div class="ss-alert warn" id="ss-secret-notice" style="display:none">Secret backend belum diisi. Isi dulu di bawah ini (nilainya sama dengan <b>LUCI_API_SECRET</b> di Vercel), lalu klik Simpan &mdash; setelah itu halaman bisa dipakai.</div>
+      <label class="ss-label" for="ss-set-apiurl">URL Backend (Vercel)</label>
+      <input class="ss-input" id="ss-set-apiurl" type="url" placeholder="https://shoot.boundless.my.id" autocomplete="off">
+      <label class="ss-label" for="ss-set-secret">Secret (LUCI_API_SECRET)</label>
+      <input class="ss-input" id="ss-set-secret" type="password" placeholder="Belum terisi" autocomplete="off">
+      <p class="ss-note" style="margin-top:8px">Secret ditampilkan sebagai titik-titik. Tersimpan di perangkat ini (UCI <b>sunset</b>) dan hanya dikirim ke backend-mu sendiri sebagai header <b>x-luci-secret</b>. Key XL tidak pernah ada di perangkat ini.</p>
+      <div class="ss-btnrow">
+        <button class="ss-btn primary" id="ss-btn-saveset" type="button">Simpan Pengaturan</button>
+        <span class="ss-spin" id="ss-set-spin">Menyimpan&hellip;</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="ss-foot">luci-app-sunset &middot; Syamsul Sarip Hidayat &middot; Boundless</p>
+  <div class="ss-toast" id="ss-toast"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var CSRF_TOKEN = "<%=token%>";
+var URL_CONFIG = "<%=luci.dispatcher.build_url("admin", "services", "sunset", "config")%>";
+var URL_SAVE   = "<%=luci.dispatcher.build_url("admin", "services", "sunset", "saveconfig")%>";
+
+var METHODS = [
+  { id: "balance",        label: "\uD83D\uDCB5 Pulsa" },
+  { id: "qris",           label: "\uD83D\uDDBC\uFE0F QRIS" },
+  { id: "balance_decoy",  label: "\uD83D\uDCB5 Pulsa + Decoy" },
+  { id: "balance_decoy0", label: "\uD83D\uDCB5 Pulsa + Decoy V2" },
+  { id: "qris_decoy0",    label: "\uD83D\uDDBC\uFE0F QRIS + Decoy V2" }
+];
+function methodLabel(m){
+  if (!m) return "\u2699\uFE0F Manual";
+  for (var i = 0; i < METHODS.length; i++) if (METHODS[i].id === m) return METHODS[i].label;
+  return m;
+}
+
+var cfg = { api_url: "", secret: "", has_secret: false };
+var state = {
+  accounts: [], activeNumber: null,
+  welcomeLoaded: false, quotaLoaded: false, bookmarksLoaded: false,
+  welcome: null, bookmarks: [],
+  pendingNumber: null,
+  family: null, options: [],
+  buyCtx: null,   /* { opt, quote } */
+  bmIndex: null,  /* bookmark index for confirm/edit panels */
+  currentTab: "welcome"
+};
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function fmtRp(n){ return n == null || isNaN(n) ? "-" : "Rp " + Number(n).toLocaleString("id-ID"); }
+function fmtBytes(b){
+  if (b == null || isNaN(b)) return "-";
+  b = Number(b);
+  if (b >= 1073741824) return (b / 1073741824).toFixed(1).replace(".", ",") + " GB";
+  if (b >= 1048576) return Math.round(b / 1048576) + " MB";
+  if (b >= 1024) return Math.round(b / 1024) + " KB";
+  return b + " B";
+}
+function fmtDate(ts){
+  if (!ts) return "";
+  var ms = Number(ts);
+  if (isNaN(ms)) return "";
+  if (ms < 1e12) ms = ms * 1000;
+  var d = new Date(ms);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+}
+function toast(msg){
+  var t = $("ss-toast");
+  t.textContent = msg;
+  t.className = "ss-toast show";
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.className = "ss-toast"; }, 2800);
+}
+function showAlert(kind, msg){
+  var a = $("ss-alert");
+  if (!msg) { a.className = "ss-alert"; a.textContent = ""; return; }
+  a.className = "ss-alert " + kind;
+  a.textContent = msg;
+}
+function errMsg(j, fallback){
+  if (j && typeof j === "object") {
+    if (j.error) return String(j.error);
+    if (j.message) return String(j.message);
+  }
+  return fallback || "Terjadi kesalahan.";
+}
+
+/* ---------- panggilan backend Vercel ---------- */
+function api(path, method, body){
+  var opts = {
+    method: method || "GET",
+    headers: { "x-luci-secret": cfg.secret }
+  };
+  if (body != null) {
+    opts.headers["Content-Type"] = "application/json";
+    opts.body = JSON.stringify(body);
+  }
+  return fetch(cfg.api_url.replace(/\/+$/, "") + path, opts).then(function(r){
+    return r.json().catch(function(){ return { ok: false, error: "Respons backend tidak valid (HTTP " + r.status + ")." }; });
+  }).catch(function(){
+    return { ok: false, error: "Tidak bisa menghubungi backend. Cek koneksi internet & URL di tab Pengaturan." };
+  });
+}
+
+/* ---------- panggilan controller lokal LuCI ---------- */
+function getLocal(url){
+  return fetch(url, { credentials: "same-origin" }).then(function(r){ return r.json(); });
+}
+function postLocal(url, data){
+  var body = "token=" + encodeURIComponent(CSRF_TOKEN);
+  Object.keys(data || {}).forEach(function(k){
+    body += "&" + encodeURIComponent(k) + "=" + encodeURIComponent(data[k]);
+  });
+  return fetch(url, { method: "POST", credentials: "same-origin",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body
+  }).then(function(r){
+    return r.json().catch(function(){ return { ok: false, error: "HTTP " + r.status }; });
+  });
+}
+
+/* ---------- tab ---------- */
+function showTab(name){
+  state.currentTab = name;
+  ["welcome","kuota","beli","bookmark","pengaturan"].forEach(function(t){
+    $("tab-" + t).style.display = (t === name) ? "" : "none";
+  });
+  var tabs = $("ss-tabs").children;
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
+  }
+  if (name === "kuota" && !state.quotaLoaded && cfg.has_secret) loadQuota();
+  if (name === "bookmark" && !state.bookmarksLoaded && cfg.has_secret) loadBookmarks();
+}
+
+/* ---------- render kuota (dipakai welcome & tab kuota) ---------- */
+function quotaItemHtml(q, full){
+  var html = '<div class="ss-qitem"><div class="qn">' + esc(q.name) + "</div>";
+  var meta = [];
+  if (q.group_name && q.group_name !== q.name) meta.push(esc(q.group_name));
+  if (q.unlimited) meta.push("Tanpa batas");
+  else meta.push("Sisa " + fmtBytes(q.remaining_bytes) + " dari " + fmtBytes(q.total_bytes) + (q.remaining_pct != null ? " (" + q.remaining_pct + "%)" : ""));
+  var exp = fmtDate(q.expired_at);
+  if (exp) meta.push("Berlaku s/d " + exp);
+  if (q.family_code) meta.push("Family: " + esc(q.family_code));
+  html += '<div class="qm">' + meta.join(" &middot; ") + "</div>";
+  var pct = q.unlimited ? 100 : (q.remaining_pct == null ? 0 : Math.max(0, Math.min(100, q.remaining_pct)));
+  html += '<div class="ss-bar"><i style="width:' + pct + '%"></i></div>';
+  if (full && q.family_code) {
+    html += '<div class="ss-btnrow"><button class="ss-btn small" type="button" data-buy-family="' + esc(q.family_code) + '">Beli Lagi dari Family Ini</button></div>';
+  }
+  html += "</div>";
+  return html;
+}
+function renderQuotaList(el, quotas, full){
+  if (!quotas || quotas.length === 0) {
+    el.innerHTML = '<p class="ss-note">Tidak ada paket kuota aktif.</p>';
+    return;
+  }
+  el.innerHTML = quotas.map(function(q){ return quotaItemHtml(q, full); }).join("");
+  if (full) {
+    var btns = el.querySelectorAll("[data-buy-family]");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function(){
+        $("ss-family-input").value = this.getAttribute("data-buy-family");
+        showTab("beli");
+        searchFamily();
+      });
+    }
+  }
+}
+
+/* ---------- welcome & akun ---------- */
+function renderWelcome(w){
+  state.welcome = w;
+  $("ss-login").style.display = "none";
+  $("ss-welcome-main").style.display = "";
+  $("ss-w-number").textContent = w.number != null ? String(w.number) : "-";
+  $("ss-w-balance").textContent = w.balance ? fmtRp(w.balance.remaining) : "-";
+  $("ss-w-type").innerHTML = w.subscription_type ? '<span class="ss-badge">' + esc(w.subscription_type) + "</span>" : "-";
+  $("ss-w-tier").textContent = w.tier ? ("Tier " + w.tier.tier + " \u00B7 " + Number(w.tier.current_point).toLocaleString("id-ID") + " poin") : "-";
+  var bexp = w.balance ? fmtDate(w.balance.expired_at) : "";
+  $("ss-w-balance-exp").textContent = bexp ? ("Saldo berlaku s/d " + bexp + ".") : "";
+  $("ss-pill").textContent = w.number != null ? ("Aktif: " + w.number) : "Sunset";
+  renderQuotaList($("ss-w-quotas"), w.quotas || [], false);
+  renderSwitcher();
+}
+function renderSwitcher(){
+  var wrap = $("ss-switcher");
+  if (!state.accounts || state.accounts.length <= 1) { wrap.style.display = "none"; return; }
+  wrap.style.display = "";
+  var sel = $("ss-account-select");
+  sel.innerHTML = "";
+  state.accounts.forEach(function(a){
+    var o = document.createElement("option");
+    o.value = a.number;
+    o.textContent = a.number + (a.subscription_type ? " (" + a.subscription_type + ")" : "");
+    if (String(a.number) === String(state.activeNumber)) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+function loadWelcome(){
+  $("ss-w-spin").style.display = "inline";
+  return api("/api/luci/welcome").then(function(j){
+    $("ss-w-spin").style.display = "none";
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal memuat data akun.")); return; }
+    if (!j.hasAccount) {
+      $("ss-welcome-main").style.display = "none";
+      $("ss-login").style.display = "";
+      $("ss-login-step1").style.display = "";
+      $("ss-login-step2").style.display = "none";
+      $("ss-pill").textContent = "Belum ada akun";
+      state.welcomeLoaded = true;
+      return;
+    }
+    state.welcomeLoaded = true;
+    renderWelcome(j);
+  });
+}
+function loadAccounts(){
+  return api("/api/luci/accounts").then(function(j){
+    if (j.ok) {
+      state.accounts = j.accounts || [];
+      state.activeNumber = j.active_number;
+    }
+    return j;
+  });
+}
+function refreshAll(){
+  showAlert("", "");
+  loadAccounts().then(loadWelcome).then(function(){
+    if (state.currentTab === "kuota") { state.quotaLoaded = false; loadQuota(); }
+    toast("Data diperbarui.");
+  });
+}
+
+/* ---------- login OTP ---------- */
+function requestOtp(){
+  var num = $("ss-login-number").value.trim();
+  if (!num) { showAlert("err", "Isi nomor XL dulu."); return; }
+  $("ss-login-spin").style.display = "inline";
+  $("ss-btn-otp").disabled = true;
+  api("/api/luci/login/request", "POST", { number: num }).then(function(j){
+    $("ss-login-spin").style.display = "none";
+    $("ss-btn-otp").disabled = false;
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal meminta OTP.")); return; }
+    state.pendingNumber = j.number != null ? String(j.number) : num;
+    showAlert("", "");
+    $("ss-otp-note").textContent = "Kode OTP terkirim ke " + state.pendingNumber + ". Masukkan kode 6 digit dari SMS:";
+    $("ss-login-step1").style.display = "none";
+    $("ss-login-step2").style.display = "";
+    $("ss-login-code").focus();
+  });
+}
+function verifyOtp(){
+  var code = $("ss-login-code").value.trim();
+  if (!/^\d{6}$/.test(code)) { showAlert("err", "Kode OTP harus 6 digit."); return; }
+  $("ss-verify-spin").style.display = "inline";
+  $("ss-btn-verify").disabled = true;
+  api("/api/luci/login/verify", "POST", { number: state.pendingNumber, code: code }).then(function(j){
+    $("ss-verify-spin").style.display = "none";
+    $("ss-btn-verify").disabled = false;
+    if (!j.ok) { showAlert("err", errMsg(j, "Verifikasi OTP gagal.")); return; }
+    toast("Login berhasil: " + (j.number || state.pendingNumber));
+    state.quotaLoaded = false; state.bookmarksLoaded = false;
+    refreshAll();
+  });
+}
+
+/* ---------- kuota ---------- */
+function loadQuota(){
+  $("ss-q-spin").style.display = "inline";
+  api("/api/luci/quota").then(function(j){
+    $("ss-q-spin").style.display = "none";
+    if (!j.ok) {
+      $("ss-quota-list").innerHTML = '<p class="ss-note">' + esc(errMsg(j, "Gagal memuat kuota.")) + "</p>";
+      return;
+    }
+    state.quotaLoaded = true;
+    renderQuotaList($("ss-quota-list"), j.quotas || [], true);
+  });
+}
+
+/* ---------- beli ---------- */
+function fillMethodSelect(sel, withManual){
+  sel.innerHTML = "";
+  if (withManual) {
+    var o0 = document.createElement("option");
+    o0.value = ""; o0.textContent = "\u2699\uFE0F Manual / belum diatur";
+    sel.appendChild(o0);
+  }
+  METHODS.forEach(function(m){
+    var o = document.createElement("option");
+    o.value = m.id; o.textContent = m.label;
+    sel.appendChild(o);
+  });
+}
+function parseOverwrite(raw){
+  raw = String(raw == null ? "" : raw).trim();
+  if (raw === "") return { ok: true, value: null, filled: false };
+  var n = Number(raw);
+  if (!isFinite(n) || n < 0) return { ok: false };
+  return { ok: true, value: n, filled: true };
+}
+function searchFamily(){
+  var code = $("ss-family-input").value.trim();
+  if (!code) { showAlert("err", "Isi family code dulu."); return; }
+  showAlert("", "");
+  $("ss-b-spin").style.display = "inline";
+  $("ss-btn-family").disabled = true;
+  $("ss-confirm").style.display = "none";
+  api("/api/luci/family/" + encodeURIComponent(code) + "?price=1").then(function(j){
+    $("ss-b-spin").style.display = "none";
+    $("ss-btn-family").disabled = false;
+    if (!j.ok) {
+      $("ss-family-info").innerHTML = "";
+      $("ss-options").innerHTML = '<p class="ss-note">' + esc(errMsg(j, "Family tidak ditemukan.")) + "</p>";
+      return;
+    }
+    state.family = j.family; state.options = j.options || [];
+    $("ss-family-info").innerHTML = '<p class="ss-note"><b>' + esc(j.family.name || j.family.code) + "</b> &middot; " + esc(j.family.code) + (j.family.plan_type ? " &middot; " + esc(j.family.plan_type) : "") + "</p>";
+    if (!state.options.length) {
+      $("ss-options").innerHTML = '<p class="ss-note">Family ini tidak punya paket yang bisa dibeli.</p>';
+      return;
+    }
+    $("ss-options").innerHTML = state.options.map(function(o, i){
+      return '<div class="ss-opt"><div><div class="on">' + esc(o.name || o.option_code) + '</div><div class="om">' +
+        esc(o.variant_name || "") + (o.variant_name ? " &middot; " : "") + esc(o.option_code) + '</div></div>' +
+        '<div class="op">' + (o.price != null ? fmtRp(o.price) : "Harga n/a") + "</div>" +
+        '<button class="ss-btn primary small" type="button" data-opt="' + i + '">Pilih Paket</button></div>';
+    }).join("");
+    var btns = $("ss-options").querySelectorAll("[data-opt]");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function(){ startQuote(state.options[Number(this.getAttribute("data-opt"))]); });
+    }
+  });
+}
+function startQuote(opt){
+  if (!opt) return;
+  $("ss-c-spin").style.display = "inline";
+  api("/api/luci/buy/quote", "POST", {
+    option_code: opt.option_code,
+    family_code: state.family ? state.family.code : opt.family_code,
+    variant_code: opt.variant_code
+  }).then(function(j){
+    $("ss-c-spin").style.display = "none";
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal mengambil detail paket.")); return; }
+    showAlert("", "");
+    state.buyCtx = { opt: opt, quote: j };
+    var p = j.package || {};
+    $("ss-c-name").textContent = p.name || opt.name || "-";
+    $("ss-c-price").textContent = fmtRp(p.price != null ? p.price : opt.price);
+    $("ss-c-validity").textContent = p.validity || "-";
+    $("ss-c-balance").textContent = j.balance != null ? fmtRp(j.balance) : "-";
+    $("ss-c-family").textContent = (p.family_name || "") + (p.family_code ? " (" + p.family_code + ")" : "");
+    updateBuyWarn();
+    $("ss-c-overwrite").value = "";
+    $("ss-buy-result").className = "ss-result"; $("ss-buy-result").innerHTML = "";
+    $("ss-confirm").style.display = "";
+    $("ss-confirm").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+function updateBuyWarn(){
+  var ctx = state.buyCtx; if (!ctx) return;
+  var m = $("ss-c-method").value;
+  var warn = "";
+  if (ctx.quote.balance_sufficient === false && m.indexOf("balance") === 0) {
+    warn = "Saldo saat ini kurang dari harga paket untuk metode pulsa. Top up dulu atau pilih QRIS.";
+  }
+  $("ss-c-warn").textContent = warn;
+}
+function showBuyResult(el, j){
+  el.className = "ss-result " + (j.ok ? "ok" : "err");
+  var html = "<b>" + (j.ok ? "Berhasil." : "Gagal.") + "</b> " + esc(errMsg(j, ""));
+  if (j.amount != null) html += "<br>Total: <b>" + fmtRp(j.amount) + "</b>" + (j.item_name ? " &middot; " + esc(j.item_name) : "");
+  if (j.transaction_id) html += "<br>Kode transaksi: <code>" + esc(j.transaction_id) + "</code>";
+  if (j.ok && j.qr) {
+    if (j.qr.data_url) html += '<img class="qr" alt="QRIS" src="' + j.qr.data_url + '">';
+    else if (j.qr.string) html += "<br>Kode QR: <code>" + esc(j.qr.string) + "</code>";
+  }
+  if (j.ok) html += "<br><span>Kuota biasanya masuk dalam 5\u201330 detik. Cek tab Kuota sebentar lagi.</span>";
+  el.innerHTML = html;
+}
+function doBuy(){
+  var ctx = state.buyCtx; if (!ctx) return;
+  var ow = parseOverwrite($("ss-c-overwrite").value);
+  if (!ow.ok) { showAlert("err", "Harga overwrite tidak valid (harus angka \u2265 0)."); return; }
+  var body = {
+    option_code: ctx.quote.package.option_code || ctx.opt.option_code,
+    method: $("ss-c-method").value,
+    family_code: ctx.quote.package.family_code || (state.family ? state.family.code : undefined),
+    variant_code: ctx.opt.variant_code
+  };
+  if (ow.filled) body.overwrite_price = ow.value;
+  $("ss-c-spin").style.display = "inline";
+  $("ss-btn-buy").disabled = true;
+  api("/api/luci/buy", "POST", body).then(function(j){
+    $("ss-c-spin").style.display = "none";
+    $("ss-btn-buy").disabled = false;
+    showBuyResult($("ss-buy-result"), j);
+    if (j.ok) { state.quotaLoaded = false; state.welcomeLoaded = false; }
+  });
+}
+function saveBookmarkFromBuy(){
+  var ctx = state.buyCtx; if (!ctx) return;
+  var ow = parseOverwrite($("ss-c-overwrite").value);
+  if (!ow.ok) { showAlert("err", "Harga overwrite tidak valid (harus angka \u2265 0)."); return; }
+  var p = ctx.quote.package || {};
+  var bm = {
+    option_code: p.option_code || ctx.opt.option_code,
+    name: p.name || ctx.opt.name || "Paket",
+    price: p.price != null ? p.price : (ctx.opt.price || 0),
+    family_code: p.family_code || (state.family ? state.family.code : undefined),
+    variant_code: ctx.opt.variant_code,
+    method: $("ss-c-method").value
+  };
+  if (ow.filled) bm.overwrite_price = ow.value;
+  $("ss-c-spin").style.display = "inline";
+  $("ss-btn-savebm").disabled = true;
+  api("/api/luci/bookmarks", "POST", bm).then(function(j){
+    $("ss-c-spin").style.display = "none";
+    $("ss-btn-savebm").disabled = false;
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal menyimpan bookmark.")); return; }
+    state.bookmarksLoaded = false;
+    toast("Bookmark tersimpan.");
+  });
+}
+
+/* ---------- bookmark ---------- */
+function bookmarkTitle(b){
+  var label = (b.label || "").trim();
+  return label || ((b.name || "Paket") + " \u00B7 " + methodLabel(b.method));
+}
+function bookmarkPrice(b){ return b.overwrite_price != null ? b.overwrite_price : b.price; }
+function loadBookmarks(){
+  $("ss-bm-spin").style.display = "inline";
+  api("/api/luci/bookmarks").then(function(j){
+    $("ss-bm-spin").style.display = "none";
+    if (!j.ok) {
+      $("ss-bookmark-list").innerHTML = '<p class="ss-note">' + esc(errMsg(j, "Gagal memuat bookmark.")) + "</p>";
+      return;
+    }
+    state.bookmarks = j.bookmarks || [];
+    state.bookmarksLoaded = true;
+    renderBookmarks();
+  });
+}
+function renderBookmarks(){
+  var el = $("ss-bookmark-list");
+  if (!state.bookmarks.length) {
+    el.innerHTML = '<p class="ss-note">Belum ada bookmark. Simpan dari layar konfirmasi di tab Beli lewat tombol "Simpan sebagai Bookmark". Maksimal 50 bookmark per nomor.</p>';
+    return;
+  }
+  el.innerHTML = state.bookmarks.map(function(b, i){
+    var sub = [];
+    if ((b.label || "").trim()) sub.push(esc(b.name || "Paket"));
+    sub.push(methodLabel(b.method));
+    if (b.family_code) sub.push("Family: " + esc(b.family_code));
+    if (b.overwrite_price != null) sub.push("overwrite");
+    return '<div class="ss-qitem"><div class="qn">' + esc(bookmarkTitle(b)) + '</div>' +
+      '<div class="qm">' + sub.join(" &middot; ") + "</div>" +
+      '<div style="font-size:16px;font-weight:800;margin-top:4px">' + fmtRp(bookmarkPrice(b)) + "</div>" +
+      '<div class="ss-btnrow">' +
+      '<button class="ss-btn primary small" type="button" data-bm-buy="' + i + '">Beli Cepat</button>' +
+      '<button class="ss-btn small" type="button" data-bm-edit="' + i + '">Ubah</button>' +
+      '<button class="ss-btn small" type="button" data-bm-dup="' + i + '">Duplikat</button>' +
+      '<button class="ss-btn danger small" type="button" data-bm-del="' + i + '">Hapus</button>' +
+      "</div></div>";
+  }).join("");
+  function bind(attr, fn){
+    var btns = el.querySelectorAll("[" + attr + "]");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function(){ fn(Number(this.getAttribute(attr))); });
+    }
+  }
+  bind("data-bm-buy", openBmConfirm);
+  bind("data-bm-edit", openBmEdit);
+  bind("data-bm-dup", duplicateBookmark);
+  bind("data-bm-del", deleteBookmark);
+}
+function openBmConfirm(i){
+  var b = state.bookmarks[i]; if (!b) return;
+  state.bmIndex = i;
+  $("ss-bmc-name").textContent = bookmarkTitle(b);
+  $("ss-bmc-price").textContent = fmtRp(bookmarkPrice(b));
+  fillMethodSelect($("ss-bmc-method"), true);
+  $("ss-bmc-method").value = b.method || "";
+  $("ss-bmc-overwrite").value = b.overwrite_price != null ? b.overwrite_price : "";
+  $("ss-bmc-result").className = "ss-result"; $("ss-bmc-result").innerHTML = "";
+  $("ss-bm-edit").style.display = "none";
+  $("ss-bm-confirm").style.display = "";
+  $("ss-bm-confirm").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function doBmBuy(){
+  var i = state.bmIndex; if (i == null) return;
+  var method = $("ss-bmc-method").value;
+  if (!method) { showAlert("err", "Bookmark ini belum punya metode bayar. Pilih metode dulu."); return; }
+  var ow = parseOverwrite($("ss-bmc-overwrite").value);
+  if (!ow.ok) { showAlert("err", "Harga overwrite tidak valid (harus angka \u2265 0)."); return; }
+  var body = { index: i, method: method };
+  if (ow.filled) body.overwrite_price = ow.value;
+  $("ss-bmc-spin").style.display = "inline";
+  $("ss-btn-bmc-buy").disabled = true;
+  api("/api/luci/bookmarks/buy", "POST", body).then(function(j){
+    $("ss-bmc-spin").style.display = "none";
+    $("ss-btn-bmc-buy").disabled = false;
+    showBuyResult($("ss-bmc-result"), j);
+    if (j.ok) { state.quotaLoaded = false; state.welcomeLoaded = false; }
+  });
+}
+function openBmEdit(i){
+  var b = state.bookmarks[i]; if (!b) return;
+  state.bmIndex = i;
+  $("ss-bme-name").textContent = "Paket: " + (b.name || "-") + (b.family_code ? " \u00B7 Family " + b.family_code : "");
+  $("ss-bme-label").value = b.label || "";
+  fillMethodSelect($("ss-bme-method"), true);
+  $("ss-bme-method").value = b.method || "";
+  $("ss-bme-overwrite").value = b.overwrite_price != null ? b.overwrite_price : "";
+  $("ss-bm-confirm").style.display = "none";
+  $("ss-bm-edit").style.display = "";
+  $("ss-bm-edit").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function saveBmEdit(){
+  var i = state.bmIndex; if (i == null) return;
+  var b = state.bookmarks[i]; if (!b) return;
+  var ow = parseOverwrite($("ss-bme-overwrite").value);
+  if (!ow.ok) { showAlert("err", "Harga overwrite tidak valid (harus angka \u2265 0)."); return; }
+  var upd = {
+    index: i,
+    option_code: b.option_code,
+    name: b.name,
+    price: b.price,
+    family_code: b.family_code,
+    variant_code: b.variant_code,
+    variant_name: b.variant_name,
+    order: b.order,
+    label: $("ss-bme-label").value.trim()
+  };
+  var m = $("ss-bme-method").value;
+  if (m) upd.method = m;
+  if (ow.filled) upd.overwrite_price = ow.value;
+  $("ss-bme-spin").style.display = "inline";
+  $("ss-btn-bme-save").disabled = true;
+  api("/api/luci/bookmarks", "POST", upd).then(function(j){
+    $("ss-bme-spin").style.display = "none";
+    $("ss-btn-bme-save").disabled = false;
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal menyimpan bookmark.")); return; }
+    $("ss-bm-edit").style.display = "none";
+    state.bookmarks = j.bookmarks || state.bookmarks;
+    renderBookmarks();
+    toast("Bookmark diperbarui.");
+  });
+}
+function duplicateBookmark(i){
+  var b = state.bookmarks[i]; if (!b) return;
+  var copy = {
+    option_code: b.option_code, name: b.name, price: b.price,
+    family_code: b.family_code, variant_code: b.variant_code,
+    variant_name: b.variant_name, order: b.order,
+    method: b.method, overwrite_price: b.overwrite_price,
+    label: (b.label || "").trim() ? b.label + " (copy)" : undefined
+  };
+  api("/api/luci/bookmarks", "POST", copy).then(function(j){
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal menduplikat bookmark.")); return; }
+    showAlert("", "");
+    state.bookmarks = j.bookmarks || state.bookmarks;
+    renderBookmarks();
+    toast("Bookmark diduplikat.");
+  });
+}
+function deleteBookmark(i){
+  var b = state.bookmarks[i]; if (!b) return;
+  if (!window.confirm("Hapus bookmark \"" + bookmarkTitle(b) + "\"?")) return;
+  api("/api/luci/bookmarks/delete", "POST", { index: i }).then(function(j){
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal menghapus bookmark.")); return; }
+    $("ss-bm-confirm").style.display = "none";
+    $("ss-bm-edit").style.display = "none";
+    state.bookmarks = j.bookmarks || [];
+    renderBookmarks();
+    toast("Bookmark dihapus.");
+  });
+}
+
+/* ---------- pengaturan ---------- */
+function saveSettings(){
+  var apiUrl = $("ss-set-apiurl").value.trim();
+  var secret = $("ss-set-secret").value.trim();
+  $("ss-set-spin").style.display = "inline";
+  $("ss-btn-saveset").disabled = true;
+  postLocal(URL_SAVE, { api_url: apiUrl, secret: secret }).then(function(j){
+    $("ss-set-spin").style.display = "none";
+    $("ss-btn-saveset").disabled = false;
+    if (!j.ok) { showAlert("err", errMsg(j, "Gagal menyimpan pengaturan.")); return; }
+    cfg.api_url = apiUrl; cfg.secret = secret; cfg.has_secret = !!secret;
+    $("ss-secret-notice").style.display = cfg.has_secret ? "none" : "";
+    toast("Pengaturan tersimpan.");
+    if (cfg.has_secret) {
+      state.welcomeLoaded = false; state.quotaLoaded = false; state.bookmarksLoaded = false;
+      showTab("welcome");
+      refreshAll();
+    }
+  });
+}
+
+/* ---------- init ---------- */
+function init(){
+  fillMethodSelect($("ss-c-method"), false);
+  $("ss-c-method").addEventListener("change", updateBuyWarn);
+  var tabs = $("ss-tabs").children;
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].addEventListener("click", function(){ showTab(this.getAttribute("data-tab")); });
+  }
+  $("ss-btn-otp").addEventListener("click", requestOtp);
+  $("ss-btn-verify").addEventListener("click", verifyOtp);
+  $("ss-btn-otp-back").addEventListener("click", function(){
+    $("ss-login-step2").style.display = "none";
+    $("ss-login-step1").style.display = "";
+  });
+  $("ss-btn-refresh").addEventListener("click", refreshAll);
+  $("ss-btn-quota-refresh").addEventListener("click", function(){ state.quotaLoaded = false; loadQuota(); });
+  $("ss-btn-switch").addEventListener("click", function(){
+    var num = $("ss-account-select").value;
+    api("/api/luci/accounts/active", "POST", { number: num }).then(function(j){
+      if (!j.ok) { showAlert("err", errMsg(j, "Gagal mengganti nomor aktif.")); return; }
+      state.activeNumber = j.active_number;
+      state.quotaLoaded = false; state.bookmarksLoaded = false;
+      refreshAll();
+    });
+  });
+  $("ss-btn-family").addEventListener("click", searchFamily);
+  $("ss-family-input").addEventListener("keydown", function(e){ if (e.key === "Enter") { e.preventDefault(); searchFamily(); } });
+  $("ss-btn-buy").addEventListener("click", doBuy);
+  $("ss-btn-savebm").addEventListener("click", saveBookmarkFromBuy);
+  $("ss-btn-cancelbuy").addEventListener("click", function(){ $("ss-confirm").style.display = "none"; state.buyCtx = null; });
+  $("ss-btn-bm-refresh").addEventListener("click", function(){ state.bookmarksLoaded = false; loadBookmarks(); });
+  $("ss-btn-bmc-buy").addEventListener("click", doBmBuy);
+  $("ss-btn-bmc-cancel").addEventListener("click", function(){ $("ss-bm-confirm").style.display = "none"; });
+  $("ss-btn-bme-save").addEventListener("click", saveBmEdit);
+  $("ss-btn-bme-cancel").addEventListener("click", function(){ $("ss-bm-edit").style.display = "none"; });
+  $("ss-btn-saveset").addEventListener("click", saveSettings);
+
+  getLocal(URL_CONFIG).then(function(j){
+    if (!j.ok) { showAlert("err", "Gagal membaca pengaturan lokal dari controller LuCI."); return; }
+    cfg.api_url = j.api_url || "";
+    cfg.secret = j.secret || "";
+    cfg.has_secret = !!j.has_secret;
+    $("ss-set-apiurl").value = cfg.api_url;
+    $("ss-set-secret").value = cfg.secret;
+    $("ss-set-secret").placeholder = cfg.has_secret ? "Sudah terisi (tampil sebagai titik)" : "Belum terisi";
+    if (!cfg.has_secret) {
+      $("ss-pill").textContent = "Secret belum diisi";
+      $("ss-secret-notice").style.display = "";
+      showTab("pengaturan");
+      return;
+    }
+    $("ss-pill").textContent = "Memuat akun\u2026";
+    loadAccounts().then(loadWelcome);
+  }).catch(function(){
+    showAlert("err", "Gagal menghubungi controller LuCI lokal.");
+  });
+}
+init();
+})();
+</script>
+<%+footer%>
