@@ -67,6 +67,8 @@
 .ss-qbadge{display:inline-block;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:800;color:#fff;background:var(--ss-green)}
 .ss-qbadge.warn{background:var(--ss-amber)}
 .ss-qbadge.crit{background:var(--ss-red)}
+.ss-twarn{color:#e07f00;font-weight:700}
+.ss-tcrit{color:#d43a31;font-weight:700}
 .ss-qof{font-size:12.5px;color:var(--ss-muted)}
 .ss-bar>i.warn{background:#e07f00}
 .ss-bar>i.crit{background:#d43a31}
@@ -529,6 +531,42 @@ function daysLeft(ts){
      3 hanya karena kurang beberapa detik dari kelipatan 24 jam. */
   return Math.round((s - Date.now() / 1000) / DAY_SEC);
 }
+function fmtDateTime(ts){
+  if (!ts) return "";
+  var ms = Number(ts);
+  if (isNaN(ms)) return "";
+  if (ms < 1e12) ms = ms * 1000;
+  var d = new Date(ms);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) + ", " +
+    d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+/* Sisa masa berlaku yang presisi: hari penuh + sisa jam, bukan
+   pembulatan hari saja. Kosong bila tanggal tidak valid. */
+function remainText(ts){
+  var s = toSec(ts);
+  if (s == null) return "";
+  var diff = s - Date.now() / 1000;
+  if (diff <= 0) return "sudah berakhir";
+  diff = Math.round(diff / 60) * 60; /* buang noise detik agar batas jam/hari tidak kurang satu */
+  var hours = Math.floor(diff / 3600);
+  if (hours < 1) return "kurang dari 1 jam lagi";
+  if (hours < 24) return "sisa " + hours + " jam lagi";
+  var days = Math.floor(hours / 24);
+  var remH = hours % 24;
+  return "sisa " + days + " hari" + (remH ? " " + remH + " jam" : "") + " lagi";
+}
+/* Kelas warna urgensi untuk teks sisa waktu: merah bila kurang dari
+   sehari, oranye bila <= 3 hari. Murni tampilan - logika Kritis tetap
+   hanya dari sisa persen kuota. */
+function remainClass(ts){
+  var s = toSec(ts);
+  if (s == null) return "";
+  var diff = s - Date.now() / 1000;
+  if (diff < DAY_SEC) return "ss-tcrit";
+  if (diff <= 3 * DAY_SEC) return "ss-twarn";
+  return "";
+}
 function expiryReason(ts, label){
   var d = daysLeft(ts);
   if (d == null) return null;
@@ -594,15 +632,11 @@ function quotaItemHtml(q, full){
     (crit.length ? '<span class="ss-crit">Kritis</span>' : "") + "</div>";
   var meta = [];
   if (q.group_name && q.group_name !== q.name) meta.push(esc(q.group_name));
-  var exp = fmtDate(q.expired_at);
+  var exp = fmtDateTime(q.expired_at);
   if (exp) {
-    var dl = daysLeft(q.expired_at);
-    var suffix = "";
-    if (dl != null) {
-      if (dl < 0) suffix = " &middot; sudah berakhir";
-      else if (dl === 0) suffix = " &middot; berakhir hari ini";
-      else suffix = " &middot; " + dl + " hari lagi";
-    }
+    var rt = remainText(q.expired_at);
+    var rcls = remainClass(q.expired_at);
+    var suffix = rt ? (" &middot; " + (rcls ? '<span class="' + rcls + '">' + rt + "</span>" : rt)) : "";
     meta.push("Berlaku s/d " + exp + suffix);
   }
   if (q.family_code) meta.push('Family: ' + esc(q.family_code) + ' <button class="ss-copybtn" type="button" data-copy-family="' + esc(q.family_code) + '" title="Salin family code">Salin</button>');
@@ -670,8 +704,15 @@ function renderWelcome(w){
   $("ss-w-balance").textContent = w.balance ? fmtRp(w.balance.remaining) : "-";
   $("ss-w-type").innerHTML = w.subscription_type ? '<span class="ss-badge">' + esc(w.subscription_type) + "</span>" : "-";
   $("ss-w-tier").textContent = w.tier ? ("Tier " + w.tier.tier + " \u00B7 " + Number(w.tier.current_point).toLocaleString("id-ID") + " poin") : "-";
-  var bexp = w.balance ? fmtDate(w.balance.expired_at) : "";
-  $("ss-w-balance-exp").textContent = bexp ? ("Saldo berlaku s/d " + bexp + ".") : "";
+  var bexp = w.balance ? fmtDateTime(w.balance.expired_at) : "";
+  if (bexp) {
+    var brt = remainText(w.balance.expired_at);
+    var brcls = remainClass(w.balance.expired_at);
+    $("ss-w-balance-exp").innerHTML = "Saldo berlaku s/d " + esc(bexp) +
+      (brt ? " &middot; " + (brcls ? '<span class="' + brcls + '">' + esc(brt) + "</span>" : esc(brt)) : "") + ".";
+  } else {
+    $("ss-w-balance-exp").textContent = "";
+  }
   $("ss-pill").textContent = w.number != null ? ("Aktif: " + w.number) : "Sunset";
   renderQuotaList($("ss-w-quotas"), w.quotas || [], true);
   renderAttention(w);
